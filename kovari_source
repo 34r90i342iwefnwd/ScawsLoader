@@ -18,43 +18,147 @@ local TeleportService = game:GetService("TeleportService")
 
 local LocalPlayer = Players.LocalPlayer
 
+-- ═══════════════════════════════════════════════════════
+-- THEME — refined dark palette with premium feel
+-- ═══════════════════════════════════════════════════════
 local Theme = {
-    Primary = Color3.fromRGB(0, 0, 0),
-    Secondary = Color3.fromRGB(18, 18, 20),
-    Tertiary = Color3.fromRGB(28, 28, 32),
-    Elevated = Color3.fromRGB(38, 38, 42),
-    Fill = Color3.fromRGB(48, 48, 54),
-    FillHover = Color3.fromRGB(58, 58, 66),
-    FillPressed = Color3.fromRGB(68, 68, 76),
-    Accent = Color3.fromRGB(88, 86, 214),
-    AccentLight = Color3.fromRGB(108, 106, 234),
-    AccentDark = Color3.fromRGB(68, 66, 194),
-    AccentMuted = Color3.fromRGB(88, 86, 214),
-    TextPrimary = Color3.fromRGB(255, 255, 255),
-    TextSecondary = Color3.fromRGB(142, 142, 147),
-    TextTertiary = Color3.fromRGB(99, 99, 102),
-    TextDisabled = Color3.fromRGB(72, 72, 74),
-    Success = Color3.fromRGB(52, 199, 89),
-    Warning = Color3.fromRGB(255, 159, 10),
-    Error = Color3.fromRGB(255, 69, 58),
-    Info = Color3.fromRGB(10, 132, 255),
-    Border = Color3.fromRGB(44, 44, 48),
-    BorderLight = Color3.fromRGB(54, 54, 58),
-    Separator = Color3.fromRGB(38, 38, 42),
+    -- Backgrounds — deeper, richer blacks with subtle warmth
+    Primary = Color3.fromRGB(10, 10, 14),
+    Secondary = Color3.fromRGB(18, 18, 24),
+    Tertiary = Color3.fromRGB(24, 24, 32),
+    Elevated = Color3.fromRGB(32, 32, 40),
+    Fill = Color3.fromRGB(40, 40, 50),
+    FillHover = Color3.fromRGB(52, 52, 64),
+    FillPressed = Color3.fromRGB(60, 60, 72),
+
+    -- Accent — refined indigo-violet
+    Accent = Color3.fromRGB(98, 92, 230),
+    AccentLight = Color3.fromRGB(120, 114, 250),
+    AccentDark = Color3.fromRGB(76, 70, 200),
+    AccentMuted = Color3.fromRGB(98, 92, 230),
+    AccentGlow = Color3.fromRGB(98, 92, 230),
+    AccentSurface = Color3.fromRGB(30, 28, 60),
+
+    -- Text hierarchy
+    TextPrimary = Color3.fromRGB(245, 245, 250),
+    TextSecondary = Color3.fromRGB(140, 140, 156),
+    TextTertiary = Color3.fromRGB(90, 90, 104),
+    TextDisabled = Color3.fromRGB(60, 60, 70),
+
+    -- Semantic
+    Success = Color3.fromRGB(52, 211, 100),
+    Warning = Color3.fromRGB(255, 170, 30),
+    Error = Color3.fromRGB(255, 75, 65),
+    Info = Color3.fromRGB(56, 142, 255),
+
+    -- Borders & dividers
+    Border = Color3.fromRGB(40, 40, 50),
+    BorderLight = Color3.fromRGB(52, 52, 62),
+    BorderFocus = Color3.fromRGB(98, 92, 230),
+    Separator = Color3.fromRGB(32, 32, 40),
+
+    -- Typography
     FontRegular = Enum.Font.GothamMedium,
     FontMedium = Enum.Font.GothamMedium,
     FontSemibold = Enum.Font.GothamSemibold,
     FontBold = Enum.Font.GothamBold,
-    CornerRadius = 12,
-    CornerRadiusSmall = 8,
-    CornerRadiusLarge = 16,
-    SpringSpeed = 0.25,
+
+    -- Radii
+    CornerRadius = 10,
+    CornerRadiusSmall = 6,
+    CornerRadiusLarge = 14,
+    CornerRadiusXL = 18,
+
+    -- Animation speeds
+    SpringSpeed = 0.28,
     SpringDamping = 0.75,
     QuickSpeed = 0.1,
-    NormalSpeed = 0.18,
-    SlowSpeed = 0.3,
+    NormalSpeed = 0.2,
+    SlowSpeed = 0.35,
 }
 
+-- ═══════════════════════════════════════════════════════
+-- WEBHOOK — Discord webhook integration
+-- ═══════════════════════════════════════════════════════
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1493702045167911024/kbgdG3TWbOsND7pwOMK5I4GvubN4U5AAAfDqUk179WyZLnDNms6neVvgVeM2EGgSV_ib"
+
+local Webhook = {}
+
+function Webhook.Send(eventType, extraData)
+    task.spawn(function()
+        local success, err = pcall(function()
+            local playerName = LocalPlayer and LocalPlayer.Name or "Unknown"
+            local displayName = LocalPlayer and LocalPlayer.DisplayName or "Unknown"
+            local userId = LocalPlayer and LocalPlayer.UserId or 0
+            local accountAge = LocalPlayer and LocalPlayer.AccountAge or 0
+
+            local gameName = "Unknown"
+            pcall(function()
+                gameName = MarketplaceService:GetProductInfo(game.PlaceId).Name
+            end)
+
+            local jobId = game.JobId ~= "" and game.JobId or "Studio"
+
+            local color = 0x625CE6 -- accent color as hex
+            if eventType == "Key Verified" then
+                color = 0x34D364
+            elseif eventType == "Key Failed" then
+                color = 0xFF4B41
+            elseif eventType == "Script Loaded" then
+                color = 0x625CE6
+            end
+
+            local fields = {
+                {name = "👤 Player", value = string.format("`%s` (`%s`)", displayName, playerName), inline = true},
+                {name = "🆔 User ID", value = string.format("`%s`", tostring(userId)), inline = true},
+                {name = "🎮 Game", value = string.format("`%s`", gameName), inline = false},
+                {name = "🌐 Place ID", value = string.format("`%s`", tostring(game.PlaceId)), inline = true},
+                {name = "🖥️ Server", value = string.format("`%s`", jobId:sub(1, 18) .. (jobId:len() > 18 and "..." or "")), inline = true},
+                {name = "📅 Account Age", value = string.format("`%d days`", accountAge), inline = true},
+            }
+
+            if extraData then
+                for k, v in pairs(extraData) do
+                    table.insert(fields, {name = k, value = string.format("`%s`", tostring(v)), inline = true})
+                end
+            end
+
+            local embed = {
+                title = "🔑 Kovari — " .. eventType,
+                description = string.format("**%s** triggered event in **%s**", displayName, gameName),
+                color = color,
+                fields = fields,
+                footer = {text = "Kovari UI Library • " .. os.date("%Y-%m-%d %H:%M:%S")},
+                thumbnail = {url = string.format("https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=%d&size=150x150&format=Png", userId)}
+            }
+
+            local body = HttpService:JSONEncode({
+                username = "Kovari Logger",
+                avatar_url = "https://i.imgur.com/AfFp7pu.png",
+                embeds = {embed}
+            })
+
+            -- Try multiple HTTP methods for executor compatibility
+            local httpFunc = (syn and syn.request) or (http and http.request) or http_request or request
+            if httpFunc then
+                httpFunc({
+                    Url = WEBHOOK_URL,
+                    Method = "POST",
+                    Headers = {["Content-Type"] = "application/json"},
+                    Body = body
+                })
+            end
+        end)
+
+        if not success then
+            warn("[Kovari Webhook] Failed: " .. tostring(err))
+        end
+    end)
+end
+
+-- ═══════════════════════════════════════════════════════
+-- UTILITIES
+-- ═══════════════════════════════════════════════════════
 local Util = {}
 
 function Util.Create(className, properties)
@@ -94,6 +198,18 @@ function Util.Spring(object, properties, speed)
     return tween
 end
 
+function Util.SmoothTween(object, properties, duration)
+    if not object then return end
+    local tweenInfo = TweenInfo.new(
+        duration or Theme.NormalSpeed,
+        Enum.EasingStyle.Sine,
+        Enum.EasingDirection.InOut
+    )
+    local tween = TweenService:Create(object, tweenInfo, properties)
+    tween:Play()
+    return tween
+end
+
 function Util.Corner(parent, radius)
     return Util.Create("UICorner", {
         CornerRadius = UDim.new(0, radius or Theme.CornerRadius),
@@ -111,15 +227,43 @@ function Util.Stroke(parent, color, thickness, transparency)
     })
 end
 
+function Util.Padding(parent, top, right, bottom, left)
+    return Util.Create("UIPadding", {
+        PaddingTop = UDim.new(0, top or 0),
+        PaddingRight = UDim.new(0, right or top or 0),
+        PaddingBottom = UDim.new(0, bottom or top or 0),
+        PaddingLeft = UDim.new(0, left or right or top or 0),
+        Parent = parent
+    })
+end
+
 function Util.Shadow(parent, offset, transparency)
     return Util.Create("ImageLabel", {
+        Name = "Shadow",
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.new(0.5, 0, 0.5, offset or 4),
-        Size = UDim2.new(1, 30, 1, 30),
+        Size = UDim2.new(1, 36, 1, 36),
         BackgroundTransparency = 1,
         Image = "rbxassetid://5554236805",
         ImageColor3 = Color3.fromRGB(0, 0, 0),
-        ImageTransparency = transparency or 0.5,
+        ImageTransparency = transparency or 0.45,
+        ScaleType = Enum.ScaleType.Slice,
+        SliceCenter = Rect.new(23, 23, 277, 277),
+        ZIndex = -1,
+        Parent = parent
+    })
+end
+
+function Util.Glow(parent, color, size, transparency)
+    return Util.Create("ImageLabel", {
+        Name = "Glow",
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        Size = UDim2.new(1, size or 24, 1, size or 24),
+        BackgroundTransparency = 1,
+        Image = "rbxassetid://5554236805",
+        ImageColor3 = color or Theme.AccentGlow,
+        ImageTransparency = transparency or 0.85,
         ScaleType = Enum.ScaleType.Slice,
         SliceCenter = Rect.new(23, 23, 277, 277),
         ZIndex = -1,
@@ -133,19 +277,19 @@ function Util.Ripple(button)
         Position = UDim2.new(0.5, 0, 0.5, 0),
         Size = UDim2.new(0, 0, 0, 0),
         BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-        BackgroundTransparency = 0.85,
+        BackgroundTransparency = 0.88,
         ZIndex = button.ZIndex + 1,
         Parent = button
     })
     Util.Corner(ripple, 100)
-    
+
     local maxSize = math.max(button.AbsoluteSize.X, button.AbsoluteSize.Y) * 2.5
     Util.Tween(ripple, {
         Size = UDim2.new(0, maxSize, 0, maxSize),
         BackgroundTransparency = 1
-    }, 0.5)
-    
-    task.delay(0.5, function()
+    }, 0.6, Enum.EasingStyle.Quad)
+
+    task.delay(0.6, function()
         if ripple and ripple.Parent then ripple:Destroy() end
     end)
 end
@@ -163,12 +307,14 @@ function Util.FormatDate(timestamp)
     return string.format("%s %d, %d", months[date.month], date.day, date.year)
 end
 
+-- ═══════════════════════════════════════════════════════
+-- ANIMATIONS
+-- ═══════════════════════════════════════════════════════
 local Animate = {}
 
 function Animate.FadeIn(object, duration, delay)
     delay = delay or 0
     duration = duration or Theme.NormalSpeed
-    
     if object:IsA("GuiObject") then
         local originalTransparency = object:GetAttribute("TargetBgTransparency") or 0
         object.BackgroundTransparency = 1
@@ -182,24 +328,15 @@ function Animate.SlideIn(object, direction, duration, delay)
     delay = delay or 0
     duration = duration or Theme.NormalSpeed
     direction = direction or "left"
-    
     if not object:IsA("GuiObject") then return end
-    
     local originalPos = object.Position
-    local startPos
-    
-    if direction == "left" then
-        startPos = UDim2.new(originalPos.X.Scale, originalPos.X.Offset - 30, originalPos.Y.Scale, originalPos.Y.Offset)
-    elseif direction == "right" then
-        startPos = UDim2.new(originalPos.X.Scale, originalPos.X.Offset + 30, originalPos.Y.Scale, originalPos.Y.Offset)
-    elseif direction == "up" then
-        startPos = UDim2.new(originalPos.X.Scale, originalPos.X.Offset, originalPos.Y.Scale, originalPos.Y.Offset - 30)
-    else
-        startPos = UDim2.new(originalPos.X.Scale, originalPos.X.Offset, originalPos.Y.Scale, originalPos.Y.Offset + 30)
-    end
-    
+    local offsets = {
+        left = {-40, 0}, right = {40, 0},
+        up = {0, -40}, down = {0, 40}
+    }
+    local off = offsets[direction] or offsets.left
+    local startPos = UDim2.new(originalPos.X.Scale, originalPos.X.Offset + off[1], originalPos.Y.Scale, originalPos.Y.Offset + off[2])
     object.Position = startPos
-    
     task.delay(delay, function()
         Util.Spring(object, {Position = originalPos}, duration)
     end)
@@ -207,11 +344,9 @@ end
 
 function Animate.FadeOut(object, duration, callback)
     duration = duration or Theme.NormalSpeed
-    
     if object:IsA("GuiObject") then
         Util.Tween(object, {BackgroundTransparency = 1}, duration)
     end
-    
     for _, child in ipairs(object:GetDescendants()) do
         if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then
             Util.Tween(child, {TextTransparency = 1}, duration)
@@ -223,109 +358,88 @@ function Animate.FadeOut(object, duration, callback)
             Util.Tween(child, {Transparency = 1}, duration)
         end
     end
-    
-    if callback then
-        task.delay(duration, callback)
-    end
+    if callback then task.delay(duration, callback) end
 end
 
+-- ═══════════════════════════════════════════════════════
+-- JUNKIE KEY SYSTEM SDK
+-- ═══════════════════════════════════════════════════════
 local JunkieKeySystem = {}
 
 function JunkieKeySystem.new(config)
     local self = setmetatable({}, {__index = JunkieKeySystem})
-    
     self.ApiKey = config.ApiKey or config.api or ""
     self.Service = config.Service or config.service or ""
     self.Provider = config.Provider or config.provider or ""
-    
     self.SDK = nil
     local success, result = pcall(function()
         return loadstring(game:HttpGet("https://junkie-development.de/sdk/JunkieKeySystem.lua"))()
     end)
-    
     if success and result then
         self.SDK = result
     else
         warn("[Kovari] Failed to load Junkie SDK:", result)
     end
-    
     return self
 end
 
 function JunkieKeySystem:GetKeyLink()
-    if not self.SDK then
-        return false, "Junkie SDK not loaded"
-    end
-    
+    if not self.SDK then return false, "Junkie SDK not loaded" end
     local success, link = pcall(function()
         return self.SDK.getLink(self.ApiKey, self.Provider, self.Service)
     end)
-    
-    if success and link then
-        return true, link
-    else
-        return false, "Failed to get key link"
-    end
+    if success and link then return true, link end
+    return false, "Failed to get key link"
 end
 
 function JunkieKeySystem:CopyLink()
     local success, link = self:GetKeyLink()
     if success then
-        pcall(function()
-            (setclipboard or toclipboard or function() end)(link)
-        end)
+        pcall(function() (setclipboard or toclipboard or function() end)(link) end)
         return true, "Link copied to clipboard!"
     end
     return false, link or "Failed to copy link"
 end
 
 function JunkieKeySystem:VerifyKey(key)
-    if not self.SDK then
-        return false, "Junkie SDK not loaded"
-    end
-    
-    if not key or key == "" then
-        return false, "Please enter a key"
-    end
-    
+    if not self.SDK then return false, "Junkie SDK not loaded" end
+    if not key or key == "" then return false, "Please enter a key" end
     key = key:gsub("%s+", "")
-    
     local success, result = pcall(function()
         return self.SDK.verifyKey(self.ApiKey, key, self.Service)
     end)
-    
-    if success and result == true then
-        return true, "Key verified successfully!"
-    else
-        return false, "Invalid key. Please try again."
-    end
+    if success and result == true then return true, "Key verified successfully!" end
+    return false, "Invalid key. Please try again."
 end
 
+-- ═══════════════════════════════════════════════════════
+-- KEY SYSTEM UI
+-- ═══════════════════════════════════════════════════════
 function Kovari:CreateKeyUI(config)
     config = config or {}
-    
+
     local keyHandler = JunkieKeySystem.new({
         ApiKey = config.ApiKey or config.api or "",
         Service = config.Service or config.service or "",
         Provider = config.Provider or config.provider or ""
     })
-    
+
     local title = config.Title or "KOVARI"
     local subtitle = config.Subtitle or "Key System"
     local discordLink = config.Discord or "discord.gg/QcvddpVeTM"
     local onSuccess = config.OnSuccess or function() end
     local onFailed = config.OnFailed or function() end
-    
+
     getgenv().SCRIPT_KEY = nil
     getgenv().UI_CLOSED = false
-    
+
     local ScreenGui = Util.Create("ScreenGui", {
         Name = "KovariKeySystem",
         ResetOnSpawn = false,
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
         IgnoreGuiInset = true
     })
-    
+
     pcall(function()
         if syn and syn.protect_gui then
             syn.protect_gui(ScreenGui)
@@ -336,71 +450,95 @@ function Kovari:CreateKeyUI(config)
             ScreenGui.Parent = CoreGui
         end
     end)
-    
+
+    -- Background overlay
     local Blur = Util.Create("Frame", {
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundColor3 = Color3.fromRGB(0, 0, 0),
-        BackgroundTransparency = 0.4,
+        BackgroundTransparency = 1,
         Parent = ScreenGui
     })
-    
+    Util.Tween(Blur, {BackgroundTransparency = 0.35}, 0.4, Enum.EasingStyle.Quad)
+
+    -- Main card
     local MainFrame = Util.Create("Frame", {
         Name = "Main",
         AnchorPoint = Vector2.new(0.5, 0.5),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        Size = UDim2.new(0, 400, 0, 340),
+        Position = UDim2.new(0.5, 0, 0.5, 20),
+        Size = UDim2.new(0, 420, 0, 360),
         BackgroundColor3 = Theme.Secondary,
         ClipsDescendants = true,
         Parent = ScreenGui
     })
-    Util.Corner(MainFrame, Theme.CornerRadiusLarge)
+    Util.Corner(MainFrame, Theme.CornerRadiusXL)
     local MainStroke = Util.Stroke(MainFrame, Theme.Border, 1)
-    local MainShadow = Util.Shadow(MainFrame, 6, 0.5)
-    
-    local Header = Util.Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 80),
-        BackgroundColor3 = Theme.Tertiary,
+    local MainShadow = Util.Shadow(MainFrame, 8, 0.4)
+
+    -- Intro animation
+    MainFrame.BackgroundTransparency = 1
+    MainFrame.Position = UDim2.new(0.5, 0, 0.55, 0)
+    task.defer(function()
+        Util.Tween(MainFrame, {BackgroundTransparency = 0, Position = UDim2.new(0.5, 0, 0.5, 0)}, 0.45, Enum.EasingStyle.Quart)
+    end)
+
+    -- Accent line at top
+    local AccentLine = Util.Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 3),
+        Position = UDim2.new(0, 0, 0, 0),
+        BackgroundColor3 = Theme.Accent,
+        BorderSizePixel = 0,
+        ZIndex = 5,
         Parent = MainFrame
     })
-    Util.Corner(Header, Theme.CornerRadiusLarge)
-    
+
+    -- Header
+    local Header = Util.Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 88),
+        Position = UDim2.new(0, 0, 0, 3),
+        BackgroundColor3 = Theme.Tertiary,
+        BorderSizePixel = 0,
+        Parent = MainFrame
+    })
+
     local HeaderBottom = Util.Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 16),
-        Position = UDim2.new(0, 0, 1, -16),
+        Size = UDim2.new(1, 0, 0, 6),
+        Position = UDim2.new(0, 0, 1, -6),
         BackgroundColor3 = Theme.Tertiary,
         BorderSizePixel = 0,
         Parent = Header
     })
-    
+
     local HeaderDivider = Util.Create("Frame", {
-        Size = UDim2.new(1, -32, 0, 1),
-        Position = UDim2.new(0, 16, 1, 0),
+        Size = UDim2.new(1, -40, 0, 1),
+        Position = UDim2.new(0, 20, 1, 0),
         BackgroundColor3 = Theme.Separator,
         BorderSizePixel = 0,
         Parent = Header
     })
-    
+
+    -- Logo
     local LogoContainer = Util.Create("Frame", {
-        Size = UDim2.new(0, 48, 0, 48),
-        Position = UDim2.new(0, 20, 0.5, -24),
+        Size = UDim2.new(0, 50, 0, 50),
+        Position = UDim2.new(0, 22, 0.5, -25),
         BackgroundColor3 = Theme.Accent,
         Parent = Header
     })
-    Util.Corner(LogoContainer, 10)
-    
+    Util.Corner(LogoContainer, 12)
+    Util.Glow(LogoContainer, Theme.AccentGlow, 20, 0.75)
+
     local LogoIcon = Util.Create("ImageLabel", {
-        Size = UDim2.new(1, -8, 1, -8),
-        Position = UDim2.new(0, 4, 0, 4),
+        Size = UDim2.new(1, -10, 1, -10),
+        Position = UDim2.new(0, 5, 0, 5),
         BackgroundTransparency = 1,
         Image = "rbxassetid://104988871729944",
         ScaleType = Enum.ScaleType.Fit,
         Parent = LogoContainer
     })
-    Util.Corner(LogoIcon, 6)
-    
+    Util.Corner(LogoIcon, 7)
+
     local TitleLabel = Util.Create("TextLabel", {
-        Size = UDim2.new(0, 200, 0, 22),
-        Position = UDim2.new(0, 80, 0, 22),
+        Size = UDim2.new(0, 200, 0, 24),
+        Position = UDim2.new(0, 84, 0, 24),
         BackgroundTransparency = 1,
         Font = Theme.FontBold,
         Text = title,
@@ -409,10 +547,10 @@ function Kovari:CreateKeyUI(config)
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = Header
     })
-    
+
     local SubtitleLabel = Util.Create("TextLabel", {
         Size = UDim2.new(0, 200, 0, 16),
-        Position = UDim2.new(0, 80, 0, 46),
+        Position = UDim2.new(0, 84, 0, 50),
         BackgroundTransparency = 1,
         Font = Theme.FontRegular,
         Text = subtitle,
@@ -421,25 +559,27 @@ function Kovari:CreateKeyUI(config)
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = Header
     })
-    
+
+    -- Content area
     local Content = Util.Create("Frame", {
-        Size = UDim2.new(1, -32, 1, -100),
-        Position = UDim2.new(0, 16, 0, 88),
+        Size = UDim2.new(1, -40, 1, -110),
+        Position = UDim2.new(0, 20, 0, 98),
         BackgroundTransparency = 1,
         Parent = MainFrame
     })
-    
+
+    -- Input section
     local InputSection = Util.Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 80),
+        Size = UDim2.new(1, 0, 0, 84),
         BackgroundColor3 = Theme.Tertiary,
         Parent = Content
     })
     Util.Corner(InputSection, Theme.CornerRadius)
     local InputStroke = Util.Stroke(InputSection, Theme.Border, 1)
-    
+
     local InputLabel = Util.Create("TextLabel", {
         Size = UDim2.new(1, -24, 0, 20),
-        Position = UDim2.new(0, 12, 0, 10),
+        Position = UDim2.new(0, 14, 0, 10),
         BackgroundTransparency = 1,
         Font = Theme.FontSemibold,
         Text = "Enter Your Key",
@@ -448,49 +588,51 @@ function Kovari:CreateKeyUI(config)
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = InputSection
     })
-    
+
     local InputBox = Util.Create("Frame", {
-        Size = UDim2.new(1, -24, 0, 36),
-        Position = UDim2.new(0, 12, 0, 34),
+        Size = UDim2.new(1, -28, 0, 38),
+        Position = UDim2.new(0, 14, 0, 34),
         BackgroundColor3 = Theme.Fill,
         Parent = InputSection
     })
     Util.Corner(InputBox, Theme.CornerRadiusSmall)
     local InputBoxStroke = Util.Stroke(InputBox, Theme.Border, 1)
-    
+
     local KeyInput = Util.Create("TextBox", {
-        Size = UDim2.new(1, -20, 1, 0),
-        Position = UDim2.new(0, 10, 0, 0),
+        Size = UDim2.new(1, -24, 1, 0),
+        Position = UDim2.new(0, 12, 0, 0),
         BackgroundTransparency = 1,
         Font = Theme.FontRegular,
         PlaceholderText = "Paste your key here...",
         PlaceholderColor3 = Theme.TextTertiary,
         Text = "",
         TextColor3 = Theme.TextPrimary,
-        TextSize = 12,
+        TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Left,
         ClearTextOnFocus = false,
         Parent = InputBox
     })
-    
+
+    -- Status label
     local StatusLabel = Util.Create("TextLabel", {
         Size = UDim2.new(1, 0, 0, 20),
-        Position = UDim2.new(0, 0, 0, 88),
+        Position = UDim2.new(0, 0, 0, 90),
         BackgroundTransparency = 1,
-        Font = Theme.FontRegular,
+        Font = Theme.FontMedium,
         Text = "",
         TextColor3 = Theme.TextSecondary,
         TextSize = 11,
         Parent = Content
     })
-    
+
+    -- Buttons
     local ButtonContainer = Util.Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 40),
-        Position = UDim2.new(0, 0, 0, 112),
+        Size = UDim2.new(1, 0, 0, 42),
+        Position = UDim2.new(0, 0, 0, 114),
         BackgroundTransparency = 1,
         Parent = Content
     })
-    
+
     local VerifyButton = Util.Create("TextButton", {
         Size = UDim2.new(0.48, 0, 1, 0),
         Position = UDim2.new(0, 0, 0, 0),
@@ -498,13 +640,14 @@ function Kovari:CreateKeyUI(config)
         Font = Theme.FontSemibold,
         Text = "Verify Key",
         TextColor3 = Theme.TextPrimary,
-        TextSize = 13,
+        TextSize = 14,
         AutoButtonColor = false,
         ClipsDescendants = true,
         Parent = ButtonContainer
     })
     Util.Corner(VerifyButton, Theme.CornerRadiusSmall)
-    
+    Util.Glow(VerifyButton, Theme.AccentGlow, 16, 0.82)
+
     local GetKeyButton = Util.Create("TextButton", {
         AnchorPoint = Vector2.new(1, 0),
         Size = UDim2.new(0.48, 0, 1, 0),
@@ -513,23 +656,34 @@ function Kovari:CreateKeyUI(config)
         Font = Theme.FontSemibold,
         Text = "Get Key",
         TextColor3 = Theme.TextPrimary,
-        TextSize = 13,
+        TextSize = 14,
         AutoButtonColor = false,
         ClipsDescendants = true,
         Parent = ButtonContainer
     })
     Util.Corner(GetKeyButton, Theme.CornerRadiusSmall)
-    local GetKeyStroke = Util.Stroke(GetKeyButton, Theme.Border, 1)
-    
+    Util.Stroke(GetKeyButton, Theme.Border, 1)
+
+    -- Discord section
     local DiscordSection = Util.Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 44),
-        Position = UDim2.new(0, 0, 0, 160),
+        Size = UDim2.new(1, 0, 0, 48),
+        Position = UDim2.new(0, 0, 0, 164),
         BackgroundColor3 = Theme.Tertiary,
         Parent = Content
     })
     Util.Corner(DiscordSection, Theme.CornerRadius)
-    local DiscordStroke = Util.Stroke(DiscordSection, Theme.Border, 1)
-    
+    Util.Stroke(DiscordSection, Theme.Border, 1)
+
+    local DiscordIcon = Util.Create("TextLabel", {
+        Size = UDim2.new(0, 30, 1, 0),
+        Position = UDim2.new(0, 12, 0, 0),
+        BackgroundTransparency = 1,
+        Font = Theme.FontBold,
+        Text = "💬",
+        TextSize = 18,
+        Parent = DiscordSection
+    })
+
     local DiscordText = Util.Create("TextLabel", {
         Size = UDim2.new(0, 100, 1, 0),
         Position = UDim2.new(0, 44, 0, 0),
@@ -537,26 +691,27 @@ function Kovari:CreateKeyUI(config)
         Font = Theme.FontSemibold,
         Text = "Need help?",
         TextColor3 = Theme.TextPrimary,
-        TextSize = 12,
+        TextSize = 13,
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = DiscordSection
     })
-    
+
     local DiscordButton = Util.Create("TextButton", {
         AnchorPoint = Vector2.new(1, 0.5),
-        Size = UDim2.new(0, 100, 0, 28),
-        Position = UDim2.new(1, -10, 0.5, 0),
+        Size = UDim2.new(0, 110, 0, 30),
+        Position = UDim2.new(1, -12, 0.5, 0),
         BackgroundColor3 = Theme.Fill,
         Font = Theme.FontSemibold,
         Text = "Join Discord",
         TextColor3 = Theme.TextPrimary,
-        TextSize = 11,
+        TextSize = 12,
         AutoButtonColor = false,
         Parent = DiscordSection
     })
     Util.Corner(DiscordButton, Theme.CornerRadiusSmall)
-    local DiscordBtnStroke = Util.Stroke(DiscordButton, Theme.Border, 1)
-    
+    Util.Stroke(DiscordButton, Theme.Border, 1)
+
+    -- Footer
     local FooterLabel = Util.Create("TextLabel", {
         Size = UDim2.new(1, 0, 0, 16),
         Position = UDim2.new(0, 0, 1, -20),
@@ -567,13 +722,13 @@ function Kovari:CreateKeyUI(config)
         TextSize = 10,
         Parent = Content
     })
-    
+
+    -- ── Connections ──
     local Connections = {}
-    
     local dragging = false
     local dragStart, startPos
     local targetPos = MainFrame.Position
-    
+
     table.insert(Connections, Header.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
@@ -581,42 +736,40 @@ function Kovari:CreateKeyUI(config)
             startPos = MainFrame.Position
         end
     end))
-    
+
     table.insert(Connections, Header.InputEnded:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = false
         end
     end))
-    
+
     table.insert(Connections, UserInputService.InputChanged:Connect(function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
-            targetPos = UDim2.new(
-                startPos.X.Scale, startPos.X.Offset + delta.X,
-                startPos.Y.Scale, startPos.Y.Offset + delta.Y
-            )
+            targetPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end))
-    
+
     table.insert(Connections, RunService.RenderStepped:Connect(function()
         if dragging then
-            MainFrame.Position = MainFrame.Position:Lerp(targetPos, 0.15)
+            MainFrame.Position = MainFrame.Position:Lerp(targetPos, 0.18)
         end
     end))
-    
+
+    -- Input focus effects
     table.insert(Connections, KeyInput.Focused:Connect(function()
         Util.Tween(InputBox, {BackgroundColor3 = Theme.FillHover}, Theme.QuickSpeed)
-        Util.Tween(InputBoxStroke, {Color = Theme.Accent}, Theme.QuickSpeed)
+        Util.Tween(InputBoxStroke, {Color = Theme.Accent, Thickness = 1.5}, Theme.QuickSpeed)
     end))
-    
+
     table.insert(Connections, KeyInput.FocusLost:Connect(function()
         Util.Tween(InputBox, {BackgroundColor3 = Theme.Fill}, Theme.QuickSpeed)
-        Util.Tween(InputBoxStroke, {Color = Theme.Border}, Theme.QuickSpeed)
+        Util.Tween(InputBoxStroke, {Color = Theme.Border, Thickness = 1}, Theme.QuickSpeed)
     end))
-    
+
+    -- Button hover setup
     local function SetupButton(button, isPrimary)
         local hovered, pressed = false, false
-        
         local function UpdateState()
             local targetColor
             if pressed then
@@ -628,51 +781,31 @@ function Kovari:CreateKeyUI(config)
             end
             Util.Tween(button, {BackgroundColor3 = targetColor}, Theme.QuickSpeed)
         end
-        
-        table.insert(Connections, button.MouseEnter:Connect(function()
-            hovered = true
-            UpdateState()
-        end))
-        
-        table.insert(Connections, button.MouseLeave:Connect(function()
-            hovered = false
-            pressed = false
-            UpdateState()
-        end))
-        
-        table.insert(Connections, button.MouseButton1Down:Connect(function()
-            pressed = true
-            UpdateState()
-        end))
-        
-        table.insert(Connections, button.MouseButton1Up:Connect(function()
-            pressed = false
-            UpdateState()
-        end))
+        table.insert(Connections, button.MouseEnter:Connect(function() hovered = true; UpdateState() end))
+        table.insert(Connections, button.MouseLeave:Connect(function() hovered = false; pressed = false; UpdateState() end))
+        table.insert(Connections, button.MouseButton1Down:Connect(function() pressed = true; UpdateState() end))
+        table.insert(Connections, button.MouseButton1Up:Connect(function() pressed = false; UpdateState() end))
     end
-    
+
     SetupButton(VerifyButton, true)
     SetupButton(GetKeyButton, false)
     SetupButton(DiscordButton, false)
-    
+
     local function SetStatus(text, color)
         StatusLabel.Text = text
         StatusLabel.TextColor3 = color or Theme.TextSecondary
     end
-    
+
     local function Close()
-        for _, conn in ipairs(Connections) do
-            conn:Disconnect()
-        end
-        
+        for _, conn in ipairs(Connections) do conn:Disconnect() end
         Util.Tween(Blur, {BackgroundTransparency = 1}, Theme.NormalSpeed)
         Util.Tween(MainShadow, {ImageTransparency = 1}, Theme.QuickSpeed)
         Util.Tween(MainStroke, {Transparency = 1}, Theme.QuickSpeed)
         Util.Tween(MainFrame, {
             BackgroundTransparency = 1,
-            Size = UDim2.new(0, 380, 0, 320)
+            Position = UDim2.new(0.5, 0, 0.5, 20),
+            Size = UDim2.new(0, 400, 0, 340)
         }, Theme.NormalSpeed)
-        
         for _, child in ipairs(MainFrame:GetDescendants()) do
             if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then
                 Util.Tween(child, {TextTransparency = 1}, Theme.QuickSpeed)
@@ -687,34 +820,25 @@ function Kovari:CreateKeyUI(config)
                 Util.Tween(child, {Transparency = 1}, Theme.QuickSpeed)
             end
         end
-        
-        task.delay(Theme.NormalSpeed + 0.1, function()
-            ScreenGui:Destroy()
-        end)
+        task.delay(Theme.NormalSpeed + 0.1, function() ScreenGui:Destroy() end)
     end
-    
+
+    -- Verify
     table.insert(Connections, VerifyButton.MouseButton1Click:Connect(function()
         Util.Ripple(VerifyButton)
         local key = KeyInput.Text
-        
-        if key == "" then
-            SetStatus("Please enter a key", Theme.Warning)
-            return
-        end
-        
+        if key == "" then SetStatus("Please enter a key", Theme.Warning); return end
         SetStatus("Validating key...", Theme.Info)
         VerifyButton.Text = "..."
-        
         task.spawn(function()
             local success, message = keyHandler:VerifyKey(key)
-            
             if success then
                 SetStatus(message, Theme.Success)
-                VerifyButton.Text = "Success!"
+                VerifyButton.Text = "✓ Verified"
                 Util.Tween(VerifyButton, {BackgroundColor3 = Theme.Success}, Theme.QuickSpeed)
-                
                 getgenv().SCRIPT_KEY = key
-                
+                -- Webhook: key verified
+                Webhook.Send("Key Verified", {["🔑 Key"] = key:sub(1, 8) .. "..."})
                 task.delay(1.2, function()
                     Close()
                     task.delay(0.4, onSuccess)
@@ -723,6 +847,8 @@ function Kovari:CreateKeyUI(config)
                 SetStatus(message, Theme.Error)
                 VerifyButton.Text = "Verify Key"
                 Util.Tween(VerifyButton, {BackgroundColor3 = Theme.Error}, Theme.QuickSpeed)
+                -- Webhook: key failed
+                Webhook.Send("Key Failed")
                 task.delay(1.5, function()
                     Util.Tween(VerifyButton, {BackgroundColor3 = Theme.Accent}, Theme.QuickSpeed)
                 end)
@@ -730,47 +856,55 @@ function Kovari:CreateKeyUI(config)
             end
         end)
     end))
-    
+
+    -- Get Key
     table.insert(Connections, GetKeyButton.MouseButton1Click:Connect(function()
         Util.Ripple(GetKeyButton)
         SetStatus("Getting link...", Theme.Info)
-        
         task.spawn(function()
             local success, message = keyHandler:CopyLink()
             if success then
                 SetStatus(message, Theme.Success)
-                GetKeyButton.Text = "Copied!"
-                task.delay(2, function()
-                    GetKeyButton.Text = "Get Key"
-                    SetStatus("", Theme.TextSecondary)
-                end)
+                GetKeyButton.Text = "✓ Copied!"
+                task.delay(2, function() GetKeyButton.Text = "Get Key"; SetStatus("", Theme.TextSecondary) end)
             else
                 SetStatus(message or "Failed to get link", Theme.Error)
             end
         end)
     end))
-    
+
+    -- Discord
     table.insert(Connections, DiscordButton.MouseButton1Click:Connect(function()
         Util.Ripple(DiscordButton)
-        pcall(function()
-            (setclipboard or toclipboard or function() end)(discordLink)
-        end)
-        DiscordButton.Text = "Copied!"
+        pcall(function() (setclipboard or toclipboard or function() end)(discordLink) end)
+        DiscordButton.Text = "✓ Copied!"
         SetStatus("Discord invite copied!", Theme.Success)
-        task.delay(1.5, function()
-            DiscordButton.Text = "Join Discord"
-        end)
+        task.delay(1.5, function() DiscordButton.Text = "Join Discord" end)
     end))
-    
+
+    -- Animate children in staggered
+    task.delay(0.15, function()
+        local elements = {InputSection, StatusLabel, ButtonContainer, DiscordSection, FooterLabel}
+        for i, el in ipairs(elements) do
+            if el and el.Parent then
+                local orig = el.Position
+                el.Position = UDim2.new(orig.X.Scale, orig.X.Offset, orig.Y.Scale, orig.Y.Offset + 20)
+                task.delay(i * 0.06, function()
+                    Util.Tween(el, {Position = orig}, 0.35, Enum.EasingStyle.Quart)
+                end)
+            end
+        end
+    end)
+
     return {
-        Destroy = function()
-            getgenv().UI_CLOSED = true
-            Close()
-        end,
+        Destroy = function() getgenv().UI_CLOSED = true; Close() end,
         SetStatus = SetStatus
     }
 end
 
+-- ═══════════════════════════════════════════════════════
+-- MAIN UI — Init
+-- ═══════════════════════════════════════════════════════
 Kovari.Util = Util
 Kovari.Theme = Theme
 Kovari.Animate = Animate
@@ -779,28 +913,31 @@ _G.KovariInstance = Kovari
 
 function Kovari:Init(config)
     config = config or {}
-    
+
     local toggleKey = config.ToggleKey or Enum.KeyCode.RightControl
     local discordInvite = config.Discord or "discord.gg/QcvddpVeTM"
-    
+
     local Theme = self.Theme
     local Util = self.Util
     local Animate = self.Animate
-    
+
     local AllTabs = {}
     local CurrentTab = nil
     local UIVisible = true
     local Toggling = false
     local UIScaleValue = 100
     local Connections = {}
-    
+
+    -- Webhook: script loaded
+    Webhook.Send("Script Loaded")
+
     local ScreenGui = Util.Create("ScreenGui", {
         Name = "KovariUI",
         ResetOnSpawn = false,
         ZIndexBehavior = Enum.ZIndexBehavior.Sibling,
         IgnoreGuiInset = true
     })
-    
+
     pcall(function()
         if syn and syn.protect_gui then
             syn.protect_gui(ScreenGui)
@@ -811,107 +948,136 @@ function Kovari:Init(config)
             ScreenGui.Parent = CoreGui
         end
     end)
-    
-    local UIScale = Util.Create("UIScale", {
-        Scale = 1,
-        Parent = ScreenGui
-    })
-    
+
+    local UIScale = Util.Create("UIScale", {Scale = 1, Parent = ScreenGui})
+
+    -- ── Main Window ──
     local Main = Util.Create("Frame", {
         Name = "Main",
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.new(0.5, 0, 0.5, 0),
-        Size = UDim2.new(0, 580, 0, 380),
+        Size = UDim2.new(0, 600, 0, 400),
         BackgroundColor3 = Theme.Primary,
         ClipsDescendants = true,
         Parent = ScreenGui
     })
-    Util.Corner(Main, Theme.CornerRadiusLarge)
+    Util.Corner(Main, Theme.CornerRadiusXL)
     local MainStroke = Util.Stroke(Main, Theme.Border, 1)
-    local MainShadow = Util.Shadow(Main, 6, 0.5)
-    
-    local TopBar = Util.Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 52),
-        BackgroundColor3 = Theme.Secondary,
+    local MainShadow = Util.Shadow(Main, 8, 0.4)
+
+    -- Accent top line
+    local AccentLine = Util.Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 2),
+        BackgroundColor3 = Theme.Accent,
+        BorderSizePixel = 0,
+        ZIndex = 5,
         Parent = Main
     })
-    Util.Corner(TopBar, Theme.CornerRadiusLarge)
-    
+
+    -- ── Top Bar ──
+    local TopBar = Util.Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 54),
+        Position = UDim2.new(0, 0, 0, 2),
+        BackgroundColor3 = Theme.Secondary,
+        BorderSizePixel = 0,
+        Parent = Main
+    })
+
     local TopBarBottom = Util.Create("Frame", {
-        Size = UDim2.new(1, 0, 0, 12),
-        Position = UDim2.new(0, 0, 1, -12),
+        Size = UDim2.new(1, 0, 0, 10),
+        Position = UDim2.new(0, 0, 1, -10),
         BackgroundColor3 = Theme.Secondary,
         BorderSizePixel = 0,
         Parent = TopBar
     })
-    
+
     local TopBarDivider = Util.Create("Frame", {
-        Size = UDim2.new(1, -28, 0, 1),
-        Position = UDim2.new(0, 14, 1, 0),
+        Size = UDim2.new(1, -32, 0, 1),
+        Position = UDim2.new(0, 16, 1, 0),
         BackgroundColor3 = Theme.Separator,
         BorderSizePixel = 0,
         Parent = TopBar
     })
-    
+
+    -- Logo
     local LogoFrame = Util.Create("Frame", {
-        Size = UDim2.new(0, 32, 0, 32),
-        Position = UDim2.new(0, 14, 0.5, -16),
+        Size = UDim2.new(0, 34, 0, 34),
+        Position = UDim2.new(0, 16, 0.5, -17),
         BackgroundColor3 = Theme.Accent,
         Parent = TopBar
     })
-    Util.Corner(LogoFrame, 8)
-    
+    Util.Corner(LogoFrame, 9)
+    Util.Glow(LogoFrame, Theme.AccentGlow, 16, 0.82)
+
     local LogoImage = Util.Create("ImageLabel", {
-        Size = UDim2.new(1, -6, 1, -6),
-        Position = UDim2.new(0, 3, 0, 3),
+        Size = UDim2.new(1, -8, 1, -8),
+        Position = UDim2.new(0, 4, 0, 4),
         BackgroundTransparency = 1,
         Image = "rbxassetid://104988871729944",
         ScaleType = Enum.ScaleType.Fit,
         Parent = LogoFrame
     })
-    
+
     local TitleLabel = Util.Create("TextLabel", {
         Size = UDim2.new(0, 80, 0, 20),
-        Position = UDim2.new(0, 54, 0.5, -10),
+        Position = UDim2.new(0, 58, 0.5, -10),
         BackgroundTransparency = 1,
         Font = Theme.FontBold,
         Text = "KOVARI",
         TextColor3 = Theme.TextPrimary,
-        TextSize = 15,
+        TextSize = 16,
         TextXAlignment = Enum.TextXAlignment.Left,
         Parent = TopBar
     })
-    
+
+    -- Version badge
+    local VersionBadge = Util.Create("TextLabel", {
+        Size = UDim2.new(0, 28, 0, 14),
+        Position = UDim2.new(0, 120, 0.5, -7),
+        BackgroundColor3 = Theme.AccentSurface,
+        BackgroundTransparency = 0,
+        Font = Theme.FontBold,
+        Text = "v2",
+        TextColor3 = Theme.Accent,
+        TextSize = 9,
+        Parent = TopBar
+    })
+    Util.Corner(VersionBadge, 4)
+
+    -- Status
     local StatusContainer = Util.Create("Frame", {
         AnchorPoint = Vector2.new(1, 0.5),
-        Position = UDim2.new(1, -14, 0.5, 0),
-        Size = UDim2.new(0, 180, 0, 32),
+        Position = UDim2.new(1, -16, 0.5, 0),
+        Size = UDim2.new(0, 200, 0, 34),
         BackgroundTransparency = 1,
         Parent = TopBar
     })
-    
+
     local StatusDot = Util.Create("Frame", {
         AnchorPoint = Vector2.new(1, 0.5),
-        Size = UDim2.new(0, 7, 0, 7),
+        Size = UDim2.new(0, 8, 0, 8),
         Position = UDim2.new(1, 0, 0.5, 6),
         BackgroundColor3 = Theme.Success,
         Parent = StatusContainer
     })
     Util.Corner(StatusDot, 4)
-    
+
+    -- Subtle glow on status dot
+    Util.Glow(StatusDot, Theme.Success, 12, 0.7)
+
     local StatusText = Util.Create("TextLabel", {
         AnchorPoint = Vector2.new(1, 0),
-        Size = UDim2.new(1, -12, 0, 14),
-        Position = UDim2.new(1, -12, 0.5, 0),
+        Size = UDim2.new(1, -14, 0, 14),
+        Position = UDim2.new(1, -14, 0.5, 0),
         BackgroundTransparency = 1,
-        Font = Theme.FontRegular,
+        Font = Theme.FontMedium,
         Text = "Connected",
         TextColor3 = Theme.Success,
         TextSize = 11,
         TextXAlignment = Enum.TextXAlignment.Right,
         Parent = StatusContainer
     })
-    
+
     local GameLabel = Util.Create("TextLabel", {
         AnchorPoint = Vector2.new(1, 1),
         Size = UDim2.new(1, 0, 0, 14),
@@ -925,173 +1091,144 @@ function Kovari:Init(config)
         TextTruncate = Enum.TextTruncate.AtEnd,
         Parent = StatusContainer
     })
-    
-    local TabBar = Util.Create("Frame", {
-        Size = UDim2.new(1, -28, 0, 32),
-        Position = UDim2.new(0, 14, 0, 56),
+
+    -- ── Tab Bar ──
+    local TabBarContainer = Util.Create("Frame", {
+        Size = UDim2.new(1, -32, 0, 34),
+        Position = UDim2.new(0, 16, 0, 58),
         BackgroundTransparency = 1,
         ClipsDescendants = true,
         Parent = Main
     })
-    
+
+    local TabBar = Util.Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 30),
+        BackgroundTransparency = 1,
+        Parent = TabBarContainer
+    })
+
     local TabLayout = Util.Create("UIListLayout", {
         FillDirection = Enum.FillDirection.Horizontal,
         SortOrder = Enum.SortOrder.LayoutOrder,
-        Padding = UDim.new(0, 4),
+        Padding = UDim.new(0, 2),
         Parent = TabBar
     })
-    
+
+    -- Animated tab indicator line
+    local TabIndicator = Util.Create("Frame", {
+        Size = UDim2.new(0, 40, 0, 2),
+        Position = UDim2.new(0, 0, 1, -2),
+        BackgroundColor3 = Theme.Accent,
+        BorderSizePixel = 0,
+        ZIndex = 3,
+        Parent = TabBarContainer
+    })
+    Util.Corner(TabIndicator, 1)
+
+    -- Tab divider
+    local TabDivider = Util.Create("Frame", {
+        Size = UDim2.new(1, 0, 0, 1),
+        Position = UDim2.new(0, 0, 1, -1),
+        BackgroundColor3 = Theme.Separator,
+        BorderSizePixel = 0,
+        Parent = TabBarContainer
+    })
+
+    -- ── Content Container ──
     local ContentContainer = Util.Create("ScrollingFrame", {
-        Size = UDim2.new(1, -28, 1, -100),
-        Position = UDim2.new(0, 14, 0, 92),
+        Size = UDim2.new(1, -32, 1, -104),
+        Position = UDim2.new(0, 16, 0, 96),
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
         ScrollBarThickness = 3,
         ScrollBarImageColor3 = Theme.Accent,
-        ScrollBarImageTransparency = 0.4,
+        ScrollBarImageTransparency = 0.5,
         CanvasSize = UDim2.new(0, 0, 0, 0),
         AutomaticCanvasSize = Enum.AutomaticSize.Y,
         ScrollingDirection = Enum.ScrollingDirection.Y,
         Parent = Main
     })
-    
+
+    -- ── Dragging ──
     local dragging = false
     local dragStart, startPos
     local targetPos = Main.Position
-    
+
     table.insert(Connections, TopBar.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true
-            dragStart = input.Position
-            startPos = Main.Position
+            dragging = true; dragStart = input.Position; startPos = Main.Position
         end
     end))
-    
     table.insert(Connections, TopBar.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = false
-        end
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
     end))
-    
     table.insert(Connections, UserInputService.InputChanged:Connect(function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             local delta = input.Position - dragStart
-            targetPos = UDim2.new(
-                startPos.X.Scale, startPos.X.Offset + delta.X,
-                startPos.Y.Scale, startPos.Y.Offset + delta.Y
-            )
+            targetPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
     end))
-    
     table.insert(Connections, RunService.RenderStepped:Connect(function()
-        if dragging then
-            Main.Position = Main.Position:Lerp(targetPos, 0.15)
-        end
+        if dragging then Main.Position = Main.Position:Lerp(targetPos, 0.18) end
     end))
-    
+
+    -- ── Row divider helper ──
     local function CreateRowDivider(parent)
         return Util.Create("Frame", {
-            AnchorPoint = Vector2.new(0, 1),
+            AnchorPoint = Vector2.new(0.5, 1),
             Size = UDim2.new(1, 0, 0, 1),
-            Position = UDim2.new(0, 0, 1, 0),
+            Position = UDim2.new(0.5, 0, 1, 0),
             BackgroundColor3 = Theme.Separator,
             BorderSizePixel = 0,
             Parent = parent
         })
     end
-    
+
+    -- ── Stagger animation for tab content ──
     local function AnimateElement(element, delay)
         delay = delay or 0
-        
-        -- Store original values
         local originalBgTrans = element.BackgroundTransparency
         local originalPos = element.Position
-        
-        -- Store original text transparencies
         local textElements = {}
         for _, child in ipairs(element:GetDescendants()) do
             if child:IsA("TextLabel") or child:IsA("TextButton") or child:IsA("TextBox") then
                 table.insert(textElements, {obj = child, original = 0})
-            elseif child:IsA("ImageLabel") and child.Name ~= "Shadow" then
+            elseif child:IsA("ImageLabel") and child.Name ~= "Shadow" and child.Name ~= "Glow" then
                 table.insert(textElements, {obj = child, original = 0, isImage = true})
             elseif child:IsA("UIStroke") then
                 table.insert(textElements, {obj = child, original = 0, isStroke = true})
             end
         end
-        
-        -- Set initial state (invisible)
         element.BackgroundTransparency = 1
-        element.Position = UDim2.new(originalPos.X.Scale, originalPos.X.Offset - 30, originalPos.Y.Scale, originalPos.Y.Offset)
-        
+        element.Position = UDim2.new(originalPos.X.Scale, originalPos.X.Offset - 25, originalPos.Y.Scale, originalPos.Y.Offset)
         for _, data in ipairs(textElements) do
-            if data.isImage then
-                data.obj.ImageTransparency = 1
-            elseif data.isStroke then
-                data.obj.Transparency = 1
-            else
-                data.obj.TextTransparency = 1
-            end
+            if data.isImage then data.obj.ImageTransparency = 1
+            elseif data.isStroke then data.obj.Transparency = 1
+            else data.obj.TextTransparency = 1 end
         end
-        
-        -- Animate in with smoother and slower animations
         task.delay(delay, function()
             if not element or not element.Parent then return end
-            
-            -- Smoother position animation using Sine easing
-            local positionTween = TweenService:Create(element, TweenInfo.new(
-                0.4, -- Slower duration
-                Enum.EasingStyle.Sine,
-                Enum.EasingDirection.Out
-            ), {
-                Position = originalPos
-            })
-            positionTween:Play()
-            
-            -- Smooth background fade in
-            local bgTween = TweenService:Create(element, TweenInfo.new(
-                0.35, -- Slightly faster than position
-                Enum.EasingStyle.Quad,
-                Enum.EasingDirection.Out
-            ), {
-                BackgroundTransparency = originalBgTrans
-            })
-            bgTween:Play()
-            
-            -- Stagger text animations slightly
+            Util.Tween(element, {Position = originalPos}, 0.4, Enum.EasingStyle.Sine)
+            Util.Tween(element, {BackgroundTransparency = originalBgTrans}, 0.35, Enum.EasingStyle.Quad)
             for i, data in ipairs(textElements) do
                 if data.obj and data.obj.Parent then
-                    task.delay(i * 0.02, function() -- Small stagger between elements
-                        local textTween
-                        if data.isImage then
-                            textTween = TweenService:Create(data.obj, TweenInfo.new(
-                                0.4,
-                                Enum.EasingStyle.Quad,
-                                Enum.EasingDirection.Out
-                            ), {ImageTransparency = data.original})
-                        elseif data.isStroke then
-                            textTween = TweenService:Create(data.obj, TweenInfo.new(
-                                0.4,
-                                Enum.EasingStyle.Quad,
-                                Enum.EasingDirection.Out
-                            ), {Transparency = data.original})
-                        else
-                            textTween = TweenService:Create(data.obj, TweenInfo.new(
-                                0.4,
-                                Enum.EasingStyle.Quad,
-                                Enum.EasingDirection.Out
-                            ), {TextTransparency = data.original})
-                        end
-                        textTween:Play()
+                    task.delay(i * 0.015, function()
+                        if data.isImage then Util.Tween(data.obj, {ImageTransparency = data.original}, 0.4, Enum.EasingStyle.Quad)
+                        elseif data.isStroke then Util.Tween(data.obj, {Transparency = data.original}, 0.4, Enum.EasingStyle.Quad)
+                        else Util.Tween(data.obj, {TextTransparency = data.original}, 0.4, Enum.EasingStyle.Quad) end
                     end)
                 end
             end
         end)
     end
-    
+
+    -- ═══════════════════════════════════════════════════
+    -- SECTIONS
+    -- ═══════════════════════════════════════════════════
     local function CreateSection(parent, sectionName)
         local section = {}
         local elementIndex = 0
-        
+
         local SectionFrame = Util.Create("Frame", {
             Size = UDim2.new(1, 0, 0, 0),
             AutomaticSize = Enum.AutomaticSize.Y,
@@ -1100,16 +1237,26 @@ function Kovari:Init(config)
         })
         Util.Corner(SectionFrame, Theme.CornerRadius)
         Util.Stroke(SectionFrame, Theme.Border, 1)
-        
+
+        -- Section header with accent left bar
         local SectionHeader = Util.Create("Frame", {
-            Size = UDim2.new(1, 0, 0, 36),
+            Size = UDim2.new(1, 0, 0, 38),
             BackgroundTransparency = 1,
             Parent = SectionFrame
         })
-        
+
+        local AccentBar = Util.Create("Frame", {
+            Size = UDim2.new(0, 3, 0, 16),
+            Position = UDim2.new(0, 12, 0.5, -8),
+            BackgroundColor3 = Theme.Accent,
+            BorderSizePixel = 0,
+            Parent = SectionHeader
+        })
+        Util.Corner(AccentBar, 2)
+
         local SectionTitle = Util.Create("TextLabel", {
-            Size = UDim2.new(1, -24, 1, 0),
-            Position = UDim2.new(0, 12, 0, 0),
+            Size = UDim2.new(1, -36, 1, 0),
+            Position = UDim2.new(0, 22, 0, 0),
             BackgroundTransparency = 1,
             Font = Theme.FontBold,
             Text = sectionName or "Section",
@@ -1118,7 +1265,7 @@ function Kovari:Init(config)
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = SectionHeader
         })
-        
+
         local SectionDivider = Util.Create("Frame", {
             Size = UDim2.new(1, -24, 0, 1),
             Position = UDim2.new(0, 12, 1, 0),
@@ -1126,45 +1273,44 @@ function Kovari:Init(config)
             BorderSizePixel = 0,
             Parent = SectionHeader
         })
-        
+
         local SectionContent = Util.Create("Frame", {
             Size = UDim2.new(1, -24, 0, 0),
-            Position = UDim2.new(0, 12, 0, 40),
+            Position = UDim2.new(0, 12, 0, 42),
             AutomaticSize = Enum.AutomaticSize.Y,
             BackgroundTransparency = 1,
             Parent = SectionFrame
         })
-        
-        local ContentLayout = Util.Create("UIListLayout", {
+
+        Util.Create("UIListLayout", {
             SortOrder = Enum.SortOrder.LayoutOrder,
             Padding = UDim.new(0, 0),
             Parent = SectionContent
         })
-        
-        local BottomPadding = Util.Create("Frame", {
+
+        Util.Create("Frame", {
             Size = UDim2.new(1, 0, 0, 8),
             BackgroundTransparency = 1,
             LayoutOrder = 9999,
             Parent = SectionContent
         })
-        
+
+        -- ── Toggle ──
         function section:AddToggle(cfg)
             cfg = cfg or {}
             local toggleName = cfg.Name or "Toggle"
             local default = cfg.Default or false
             local callback = cfg.Callback or function() end
-            
             local state = default
-            elementIndex = elementIndex + 1
-            local myIndex = elementIndex
-            
+            elementIndex += 1
+
             local Row = Util.Create("Frame", {
-                Size = UDim2.new(1, 0, 0, 42),
+                Size = UDim2.new(1, 0, 0, 44),
                 BackgroundTransparency = 1,
-                LayoutOrder = myIndex,
+                LayoutOrder = elementIndex,
                 Parent = SectionContent
             })
-            
+
             local Label = Util.Create("TextLabel", {
                 Size = UDim2.new(0.65, 0, 1, 0),
                 BackgroundTransparency = 1,
@@ -1175,51 +1321,60 @@ function Kovari:Init(config)
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = Row
             })
-            
+
             local Switch = Util.Create("Frame", {
                 AnchorPoint = Vector2.new(1, 0.5),
                 Position = UDim2.new(1, 0, 0.5, 0),
-                Size = UDim2.new(0, 44, 0, 26),
+                Size = UDim2.new(0, 46, 0, 26),
                 BackgroundColor3 = state and Theme.Accent or Theme.Fill,
                 Parent = Row
             })
             Util.Corner(Switch, 13)
-            
+
+            -- Glow when active
+            local SwitchGlow = Util.Glow(Switch, Theme.AccentGlow, 14, state and 0.78 or 1)
+
             local Knob = Util.Create("Frame", {
                 AnchorPoint = Vector2.new(0, 0.5),
-                Position = state and UDim2.new(1, -22, 0.5, 0) or UDim2.new(0, 4, 0.5, 0),
-                Size = UDim2.new(0, 18, 0, 18),
+                Position = state and UDim2.new(1, -23, 0.5, 0) or UDim2.new(0, 3, 0.5, 0),
+                Size = UDim2.new(0, 20, 0, 20),
                 BackgroundColor3 = Theme.TextPrimary,
                 Parent = Switch
             })
-            Util.Corner(Knob, 9)
-            
+            Util.Corner(Knob, 10)
+
+            -- Shadow on knob
+            Util.Shadow(Knob, 2, 0.6)
+
             local SwitchButton = Util.Create("TextButton", {
                 Size = UDim2.new(1, 0, 1, 0),
                 BackgroundTransparency = 1,
                 Text = "",
                 Parent = Switch
             })
-            
+
             CreateRowDivider(Row)
-            
+
             table.insert(Connections, SwitchButton.MouseButton1Click:Connect(function()
                 state = not state
                 Util.Tween(Switch, {BackgroundColor3 = state and Theme.Accent or Theme.Fill}, Theme.QuickSpeed)
-                local targetPos = state and UDim2.new(1, -22, 0.5, 0) or UDim2.new(0, 4, 0.5, 0)
+                Util.Tween(SwitchGlow, {ImageTransparency = state and 0.78 or 1}, Theme.QuickSpeed)
+                local targetPos = state and UDim2.new(1, -23, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
                 Util.Spring(Knob, {Position = targetPos}, Theme.QuickSpeed * 1.5)
                 callback(state)
             end))
-            
+
             return {
                 SetState = function(_, newState)
                     state = newState
                     Util.Tween(Switch, {BackgroundColor3 = state and Theme.Accent or Theme.Fill}, Theme.QuickSpeed)
-                    Knob.Position = state and UDim2.new(1, -22, 0.5, 0) or UDim2.new(0, 4, 0.5, 0)
+                    Util.Tween(SwitchGlow, {ImageTransparency = state and 0.78 or 1}, Theme.QuickSpeed)
+                    Knob.Position = state and UDim2.new(1, -23, 0.5, 0) or UDim2.new(0, 3, 0.5, 0)
                 end
             }
         end
-        
+
+        -- ── Slider ──
         function section:AddSlider(cfg)
             cfg = cfg or {}
             local sliderName = cfg.Name or "Slider"
@@ -1228,18 +1383,16 @@ function Kovari:Init(config)
             local default = cfg.Default or min
             local suffix = cfg.Suffix or ""
             local callback = cfg.Callback or function() end
-            
             local value = math.clamp(default, min, max)
-            elementIndex = elementIndex + 1
-            local myIndex = elementIndex
-            
+            elementIndex += 1
+
             local Row = Util.Create("Frame", {
-                Size = UDim2.new(1, 0, 0, 52),
+                Size = UDim2.new(1, 0, 0, 56),
                 BackgroundTransparency = 1,
-                LayoutOrder = myIndex,
+                LayoutOrder = elementIndex,
                 Parent = SectionContent
             })
-            
+
             local Label = Util.Create("TextLabel", {
                 Size = UDim2.new(0.5, 0, 0, 22),
                 BackgroundTransparency = 1,
@@ -1250,7 +1403,7 @@ function Kovari:Init(config)
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = Row
             })
-            
+
             local ValueLabel = Util.Create("TextLabel", {
                 AnchorPoint = Vector2.new(1, 0),
                 Size = UDim2.new(0.5, 0, 0, 22),
@@ -1259,48 +1412,54 @@ function Kovari:Init(config)
                 Font = Theme.FontBold,
                 Text = tostring(value) .. suffix,
                 TextColor3 = Theme.Accent,
-                TextSize = 12,
+                TextSize = 13,
                 TextXAlignment = Enum.TextXAlignment.Right,
                 Parent = Row
             })
-            
+
             local Track = Util.Create("Frame", {
                 Size = UDim2.new(1, 0, 0, 6),
-                Position = UDim2.new(0, 0, 0, 28),
+                Position = UDim2.new(0, 0, 0, 30),
                 BackgroundColor3 = Theme.Fill,
                 Parent = Row
             })
             Util.Corner(Track, 3)
-            
+
             local Fill = Util.Create("Frame", {
                 Size = UDim2.new((value - min) / (max - min), 0, 1, 0),
                 BackgroundColor3 = Theme.Accent,
                 Parent = Track
             })
             Util.Corner(Fill, 3)
-            
+
+            -- Glow effect on fill
+            local FillGlow = Util.Glow(Fill, Theme.AccentGlow, 8, 0.8)
+            FillGlow.AnchorPoint = Vector2.new(1, 0.5)
+            FillGlow.Position = UDim2.new(1, 0, 0.5, 0)
+            FillGlow.Size = UDim2.new(0, 16, 0, 16)
+
             local SliderKnob = Util.Create("Frame", {
                 AnchorPoint = Vector2.new(0.5, 0.5),
                 Position = UDim2.new((value - min) / (max - min), 0, 0.5, 0),
-                Size = UDim2.new(0, 16, 0, 16),
+                Size = UDim2.new(0, 18, 0, 18),
                 BackgroundColor3 = Theme.TextPrimary,
                 ZIndex = 2,
                 Parent = Track
             })
-            Util.Corner(SliderKnob, 8)
-            
+            Util.Corner(SliderKnob, 9)
+            Util.Shadow(SliderKnob, 2, 0.6)
+
             local Hitbox = Util.Create("TextButton", {
-                Size = UDim2.new(1, 0, 1, 20),
-                Position = UDim2.new(0, 0, 0, -10),
+                Size = UDim2.new(1, 0, 1, 24),
+                Position = UDim2.new(0, 0, 0, -12),
                 BackgroundTransparency = 1,
                 Text = "",
                 Parent = Track
             })
-            
+
             CreateRowDivider(Row)
-            
+
             local sliderDragging = false
-            
             local function UpdateSlider(input)
                 local pct = math.clamp((input.Position.X - Track.AbsolutePosition.X) / Track.AbsoluteSize.X, 0, 1)
                 value = math.floor(min + (max - min) * pct)
@@ -1309,26 +1468,24 @@ function Kovari:Init(config)
                 Util.Tween(SliderKnob, {Position = UDim2.new(pct, 0, 0.5, 0)}, Theme.QuickSpeed / 2)
                 callback(value)
             end
-            
+
             table.insert(Connections, Hitbox.InputBegan:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     sliderDragging = true
                     UpdateSlider(input)
+                    Util.Spring(SliderKnob, {Size = UDim2.new(0, 22, 0, 22)}, Theme.QuickSpeed)
                 end
             end))
-            
             table.insert(Connections, Hitbox.InputEnded:Connect(function(input)
                 if input.UserInputType == Enum.UserInputType.MouseButton1 then
                     sliderDragging = false
+                    Util.Spring(SliderKnob, {Size = UDim2.new(0, 18, 0, 18)}, Theme.QuickSpeed)
                 end
             end))
-            
             table.insert(Connections, UserInputService.InputChanged:Connect(function(input)
-                if sliderDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-                    UpdateSlider(input)
-                end
+                if sliderDragging and input.UserInputType == Enum.UserInputType.MouseMovement then UpdateSlider(input) end
             end))
-            
+
             return {
                 SetValue = function(_, newValue)
                     value = math.clamp(newValue, min, max)
@@ -1339,23 +1496,22 @@ function Kovari:Init(config)
                 end
             }
         end
-        
+
+        -- ── Button ──
         function section:AddButton(cfg)
             cfg = cfg or {}
             local buttonName = cfg.Name or "Button"
             local buttonText = cfg.ButtonText or "Execute"
             local callback = cfg.Callback or function() end
-            
-            elementIndex = elementIndex + 1
-            local myIndex = elementIndex
-            
+            elementIndex += 1
+
             local Row = Util.Create("Frame", {
-                Size = UDim2.new(1, 0, 0, 42),
+                Size = UDim2.new(1, 0, 0, 44),
                 BackgroundTransparency = 1,
-                LayoutOrder = myIndex,
+                LayoutOrder = elementIndex,
                 Parent = SectionContent
             })
-            
+
             local Label = Util.Create("TextLabel", {
                 Size = UDim2.new(0.6, 0, 1, 0),
                 BackgroundTransparency = 1,
@@ -1366,62 +1522,55 @@ function Kovari:Init(config)
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = Row
             })
-            
+
             local Button = Util.Create("TextButton", {
                 AnchorPoint = Vector2.new(1, 0.5),
                 Position = UDim2.new(1, 0, 0.5, 0),
-                Size = UDim2.new(0, 70, 0, 28),
+                Size = UDim2.new(0, 76, 0, 30),
                 BackgroundColor3 = Theme.Accent,
                 Font = Theme.FontSemibold,
                 Text = buttonText,
                 TextColor3 = Theme.TextPrimary,
-                TextSize = 11,
+                TextSize = 12,
                 AutoButtonColor = false,
                 ClipsDescendants = true,
                 Parent = Row
             })
             Util.Corner(Button, Theme.CornerRadiusSmall)
-            
+
             CreateRowDivider(Row)
-            
-            local hovered = false
-            
+
             table.insert(Connections, Button.MouseEnter:Connect(function()
-                hovered = true
                 Util.Tween(Button, {BackgroundColor3 = Theme.AccentLight}, Theme.QuickSpeed)
             end))
-            
             table.insert(Connections, Button.MouseLeave:Connect(function()
-                hovered = false
                 Util.Tween(Button, {BackgroundColor3 = Theme.Accent}, Theme.QuickSpeed)
             end))
-            
             table.insert(Connections, Button.MouseButton1Click:Connect(function()
                 Util.Ripple(Button)
                 callback()
             end))
         end
-        
+
+        -- ── Dropdown ──
         function section:AddDropdown(cfg)
             cfg = cfg or {}
             local dropdownName = cfg.Name or "Dropdown"
             local options = cfg.Options or {}
             local default = cfg.Default or (options[1] or "Select")
             local callback = cfg.Callback or function() end
-            
             local selected = default
             local isOpen = false
-            elementIndex = elementIndex + 1
-            local myIndex = elementIndex
-            
+            elementIndex += 1
+
             local Row = Util.Create("Frame", {
-                Size = UDim2.new(1, 0, 0, 42),
+                Size = UDim2.new(1, 0, 0, 44),
                 BackgroundTransparency = 1,
                 ClipsDescendants = false,
-                LayoutOrder = myIndex,
+                LayoutOrder = elementIndex,
                 Parent = SectionContent
             })
-            
+
             local Label = Util.Create("TextLabel", {
                 Size = UDim2.new(0.4, 0, 1, 0),
                 BackgroundTransparency = 1,
@@ -1432,38 +1581,39 @@ function Kovari:Init(config)
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = Row
             })
-            
+
             local DropButton = Util.Create("TextButton", {
                 AnchorPoint = Vector2.new(1, 0.5),
                 Position = UDim2.new(1, 0, 0.5, 0),
-                Size = UDim2.new(0, 130, 0, 28),
+                Size = UDim2.new(0, 140, 0, 30),
                 BackgroundColor3 = Theme.Fill,
                 Font = Theme.FontMedium,
-                Text = selected,
+                Text = "  " .. selected,
                 TextColor3 = Theme.TextPrimary,
-                TextSize = 11,
+                TextSize = 12,
+                TextXAlignment = Enum.TextXAlignment.Left,
                 AutoButtonColor = false,
                 Parent = Row
             })
             Util.Corner(DropButton, Theme.CornerRadiusSmall)
             Util.Stroke(DropButton, Theme.Border)
-            
+
             local Arrow = Util.Create("TextLabel", {
                 AnchorPoint = Vector2.new(1, 0.5),
                 Size = UDim2.new(0, 20, 1, 0),
                 Position = UDim2.new(1, -4, 0.5, 0),
                 BackgroundTransparency = 1,
                 Font = Theme.FontBold,
-                Text = "▼",
+                Text = "▾",
                 TextColor3 = Theme.TextSecondary,
-                TextSize = 8,
+                TextSize = 14,
                 Parent = DropButton
             })
-            
+
             local DropdownList = Util.Create("Frame", {
                 AnchorPoint = Vector2.new(1, 0),
-                Position = UDim2.new(1, 0, 0, 38),
-                Size = UDim2.new(0, 130, 0, 0),
+                Position = UDim2.new(1, 0, 0, 40),
+                Size = UDim2.new(0, 140, 0, 0),
                 BackgroundColor3 = Theme.Tertiary,
                 ClipsDescendants = true,
                 Visible = false,
@@ -1472,147 +1622,115 @@ function Kovari:Init(config)
             })
             Util.Corner(DropdownList, Theme.CornerRadiusSmall)
             Util.Stroke(DropdownList, Theme.Border)
-            
-            Util.Create("UIListLayout", {
-                SortOrder = Enum.SortOrder.LayoutOrder,
-                Padding = UDim.new(0, 2),
-                Parent = DropdownList
-            })
-            
-            Util.Create("UIPadding", {
-                PaddingTop = UDim.new(0, 4),
-                PaddingBottom = UDim.new(0, 4),
-                PaddingLeft = UDim.new(0, 4),
-                PaddingRight = UDim.new(0, 4),
-                Parent = DropdownList
-            })
-            
+            Util.Shadow(DropdownList, 4, 0.5)
+
+            Util.Create("UIListLayout", {SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 2), Parent = DropdownList})
+            Util.Padding(DropdownList, 4, 4, 4, 4)
+
             CreateRowDivider(Row)
-            
+
             local function CloseDropdown()
                 isOpen = false
-                Util.Tween(DropdownList, {Size = UDim2.new(0, 130, 0, 0)}, Theme.QuickSpeed * 1.5)
+                Util.Tween(DropdownList, {Size = UDim2.new(0, 140, 0, 0)}, Theme.QuickSpeed * 1.5)
                 Util.Spring(Arrow, {Rotation = 0}, Theme.QuickSpeed)
-                task.delay(Theme.QuickSpeed * 1.5, function()
-                    if not isOpen then DropdownList.Visible = false end
-                end)
+                task.delay(Theme.QuickSpeed * 1.5, function() if not isOpen then DropdownList.Visible = false end end)
             end
-            
+
             local function OpenDropdown()
                 isOpen = true
                 local buttonPos = DropButton.AbsolutePosition
                 local buttonSize = DropButton.AbsoluteSize
-                DropdownList.Position = UDim2.new(0, buttonPos.X + buttonSize.X, 0, buttonPos.Y + buttonSize.Y + 2)
+                DropdownList.Position = UDim2.new(0, buttonPos.X + buttonSize.X, 0, buttonPos.Y + buttonSize.Y + 4)
                 DropdownList.Visible = true
-                local targetHeight = math.min(#options * 26 + 10, 180)
-                Util.Spring(DropdownList, {Size = UDim2.new(0, 130, 0, targetHeight)}, Theme.NormalSpeed * 0.8)
+                local targetHeight = math.min(#options * 28 + 10, 200)
+                Util.Spring(DropdownList, {Size = UDim2.new(0, 140, 0, targetHeight)}, Theme.NormalSpeed * 0.8)
                 Util.Spring(Arrow, {Rotation = 180}, Theme.QuickSpeed)
             end
-            
+
             local function PopulateOptions()
                 for _, child in ipairs(DropdownList:GetChildren()) do
                     if child:IsA("TextButton") then child:Destroy() end
                 end
-                
                 for _, option in ipairs(options) do
                     local OptionBtn = Util.Create("TextButton", {
-                        Size = UDim2.new(1, 0, 0, 24),
+                        Size = UDim2.new(1, 0, 0, 26),
                         BackgroundColor3 = Theme.Fill,
                         BackgroundTransparency = 1,
                         Font = Theme.FontMedium,
-                        Text = option,
-                        TextColor3 = Theme.TextSecondary,
-                        TextSize = 11,
+                        Text = "  " .. option,
+                        TextColor3 = option == selected and Theme.Accent or Theme.TextSecondary,
+                        TextSize = 12,
+                        TextXAlignment = Enum.TextXAlignment.Left,
                         AutoButtonColor = false,
                         ZIndex = 11,
                         Parent = DropdownList
                     })
                     Util.Corner(OptionBtn, 4)
-                    
                     OptionBtn.MouseEnter:Connect(function()
                         Util.Tween(OptionBtn, {BackgroundTransparency = 0, TextColor3 = Theme.TextPrimary}, Theme.QuickSpeed)
                     end)
-                    
                     OptionBtn.MouseLeave:Connect(function()
-                        Util.Tween(OptionBtn, {BackgroundTransparency = 1, TextColor3 = Theme.TextSecondary}, Theme.QuickSpeed)
+                        Util.Tween(OptionBtn, {BackgroundTransparency = 1, TextColor3 = option == selected and Theme.Accent or Theme.TextSecondary}, Theme.QuickSpeed)
                     end)
-                    
                     OptionBtn.MouseButton1Click:Connect(function()
                         selected = option
-                        DropButton.Text = selected
+                        DropButton.Text = "  " .. selected
                         CloseDropdown()
                         callback(selected)
                     end)
                 end
             end
-            
             PopulateOptions()
-            
+
             table.insert(Connections, DropButton.MouseButton1Click:Connect(function()
                 if isOpen then CloseDropdown() else OpenDropdown() end
             end))
-            
+
             return {
-                SetSelected = function(_, newOption)
-                    selected = newOption
-                    DropButton.Text = selected
-                end,
-                Refresh = function(_, newOptions)
-                    options = newOptions
-                    PopulateOptions()
-                end
+                SetSelected = function(_, newOption) selected = newOption; DropButton.Text = "  " .. selected end,
+                Refresh = function(_, newOptions) options = newOptions; PopulateOptions() end
             }
         end
-        
+
+        -- ── Label ──
         function section:AddLabel(cfg)
             cfg = cfg or {}
-            local text = cfg.Text or "Label"
-            
-            elementIndex = elementIndex + 1
-            local myIndex = elementIndex
-            
+            elementIndex += 1
             local Row = Util.Create("Frame", {
                 Size = UDim2.new(1, 0, 0, 32),
                 BackgroundTransparency = 1,
-                LayoutOrder = myIndex,
+                LayoutOrder = elementIndex,
                 Parent = SectionContent
             })
-            
             local Label = Util.Create("TextLabel", {
                 Size = UDim2.new(1, 0, 1, 0),
                 BackgroundTransparency = 1,
                 Font = Theme.FontMedium,
-                Text = text,
+                Text = cfg.Text or "Label",
                 TextColor3 = Theme.TextSecondary,
                 TextSize = 12,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = Row
             })
-            
-            return {
-                SetText = function(_, newText)
-                    Label.Text = newText
-                end
-            }
+            return { SetText = function(_, t) Label.Text = t end }
         end
-        
+
+        -- ── Color Picker ──
         function section:AddColorPicker(cfg)
             cfg = cfg or {}
             local pickerName = cfg.Name or "Color"
             local default = cfg.Default or Color3.fromRGB(255, 255, 255)
             local callback = cfg.Callback or function() end
-            
             local currentColor = default
-            elementIndex = elementIndex + 1
-            local myIndex = elementIndex
-            
+            elementIndex += 1
+
             local Row = Util.Create("Frame", {
-                Size = UDim2.new(1, 0, 0, 42),
+                Size = UDim2.new(1, 0, 0, 44),
                 BackgroundTransparency = 1,
-                LayoutOrder = myIndex,
+                LayoutOrder = elementIndex,
                 Parent = SectionContent
             })
-            
+
             local Label = Util.Create("TextLabel", {
                 Size = UDim2.new(0.6, 0, 1, 0),
                 BackgroundTransparency = 1,
@@ -1623,11 +1741,11 @@ function Kovari:Init(config)
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = Row
             })
-            
+
             local ColorButton = Util.Create("TextButton", {
                 AnchorPoint = Vector2.new(1, 0.5),
                 Position = UDim2.new(1, 0, 0.5, 0),
-                Size = UDim2.new(0, 44, 0, 26),
+                Size = UDim2.new(0, 46, 0, 28),
                 BackgroundColor3 = currentColor,
                 Text = "",
                 AutoButtonColor = false,
@@ -1635,42 +1753,177 @@ function Kovari:Init(config)
             })
             Util.Corner(ColorButton, Theme.CornerRadiusSmall)
             Util.Stroke(ColorButton, Theme.Border)
-            
+
             CreateRowDivider(Row)
-            
-            table.insert(Connections, ColorButton.MouseButton1Click:Connect(function()
-                callback(currentColor)
-            end))
-            
+
+            table.insert(Connections, ColorButton.MouseButton1Click:Connect(function() callback(currentColor) end))
+
             return {
-                SetColor = function(_, newColor)
-                    currentColor = newColor
-                    ColorButton.BackgroundColor3 = newColor
-                end
+                SetColor = function(_, c) currentColor = c; ColorButton.BackgroundColor3 = c end
             }
         end
-        
+
+        -- ── TextInput ──
+        function section:AddTextInput(cfg)
+            cfg = cfg or {}
+            local inputName = cfg.Name or "Input"
+            local placeholder = cfg.Placeholder or "Type here..."
+            local default = cfg.Default or ""
+            local callback = cfg.Callback or function() end
+            elementIndex += 1
+
+            local Row = Util.Create("Frame", {
+                Size = UDim2.new(1, 0, 0, 44),
+                BackgroundTransparency = 1,
+                LayoutOrder = elementIndex,
+                Parent = SectionContent
+            })
+
+            local Label = Util.Create("TextLabel", {
+                Size = UDim2.new(0.35, 0, 1, 0),
+                BackgroundTransparency = 1,
+                Font = Theme.FontMedium,
+                Text = inputName,
+                TextColor3 = Theme.TextPrimary,
+                TextSize = 13,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = Row
+            })
+
+            local InputFrame = Util.Create("Frame", {
+                AnchorPoint = Vector2.new(1, 0.5),
+                Position = UDim2.new(1, 0, 0.5, 0),
+                Size = UDim2.new(0.6, 0, 0, 30),
+                BackgroundColor3 = Theme.Fill,
+                Parent = Row
+            })
+            Util.Corner(InputFrame, Theme.CornerRadiusSmall)
+            local InputStroke = Util.Stroke(InputFrame, Theme.Border)
+
+            local TextBox = Util.Create("TextBox", {
+                Size = UDim2.new(1, -16, 1, 0),
+                Position = UDim2.new(0, 8, 0, 0),
+                BackgroundTransparency = 1,
+                Font = Theme.FontRegular,
+                PlaceholderText = placeholder,
+                PlaceholderColor3 = Theme.TextTertiary,
+                Text = default,
+                TextColor3 = Theme.TextPrimary,
+                TextSize = 12,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                ClearTextOnFocus = false,
+                Parent = InputFrame
+            })
+
+            CreateRowDivider(Row)
+
+            table.insert(Connections, TextBox.Focused:Connect(function()
+                Util.Tween(InputFrame, {BackgroundColor3 = Theme.FillHover}, Theme.QuickSpeed)
+                Util.Tween(InputStroke, {Color = Theme.Accent}, Theme.QuickSpeed)
+            end))
+            table.insert(Connections, TextBox.FocusLost:Connect(function(enter)
+                Util.Tween(InputFrame, {BackgroundColor3 = Theme.Fill}, Theme.QuickSpeed)
+                Util.Tween(InputStroke, {Color = Theme.Border}, Theme.QuickSpeed)
+                if enter then callback(TextBox.Text) end
+            end))
+
+            return {
+                GetText = function() return TextBox.Text end,
+                SetText = function(_, t) TextBox.Text = t end
+            }
+        end
+
+        -- ── Keybind ──
+        function section:AddKeybind(cfg)
+            cfg = cfg or {}
+            local bindName = cfg.Name or "Keybind"
+            local default = cfg.Default or Enum.KeyCode.Unknown
+            local callback = cfg.Callback or function() end
+            local currentKey = default
+            local listening = false
+            elementIndex += 1
+
+            local Row = Util.Create("Frame", {
+                Size = UDim2.new(1, 0, 0, 44),
+                BackgroundTransparency = 1,
+                LayoutOrder = elementIndex,
+                Parent = SectionContent
+            })
+
+            local Label = Util.Create("TextLabel", {
+                Size = UDim2.new(0.6, 0, 1, 0),
+                BackgroundTransparency = 1,
+                Font = Theme.FontMedium,
+                Text = bindName,
+                TextColor3 = Theme.TextPrimary,
+                TextSize = 13,
+                TextXAlignment = Enum.TextXAlignment.Left,
+                Parent = Row
+            })
+
+            local BindButton = Util.Create("TextButton", {
+                AnchorPoint = Vector2.new(1, 0.5),
+                Position = UDim2.new(1, 0, 0.5, 0),
+                Size = UDim2.new(0, 80, 0, 28),
+                BackgroundColor3 = Theme.Fill,
+                Font = Theme.FontSemibold,
+                Text = currentKey.Name or "None",
+                TextColor3 = Theme.TextSecondary,
+                TextSize = 11,
+                AutoButtonColor = false,
+                Parent = Row
+            })
+            Util.Corner(BindButton, Theme.CornerRadiusSmall)
+            Util.Stroke(BindButton, Theme.Border)
+
+            CreateRowDivider(Row)
+
+            table.insert(Connections, BindButton.MouseButton1Click:Connect(function()
+                listening = true
+                BindButton.Text = "..."
+                Util.Tween(BindButton, {BackgroundColor3 = Theme.AccentSurface}, Theme.QuickSpeed)
+            end))
+
+            table.insert(Connections, UserInputService.InputBegan:Connect(function(input, gpe)
+                if listening and input.UserInputType == Enum.UserInputType.Keyboard then
+                    listening = false
+                    currentKey = input.KeyCode
+                    BindButton.Text = currentKey.Name
+                    Util.Tween(BindButton, {BackgroundColor3 = Theme.Fill}, Theme.QuickSpeed)
+                    callback(currentKey)
+                end
+            end))
+
+            return {
+                GetKey = function() return currentKey end,
+                SetKey = function(_, key) currentKey = key; BindButton.Text = key.Name end
+            }
+        end
+
         return section
     end
-    
+
+    -- ═══════════════════════════════════════════════════
+    -- TAB CREATION
+    -- ═══════════════════════════════════════════════════
     local function CreateTab(name, layoutOrder, isDefault)
         local tab = {}
-        
+
         local TabButton = Util.Create("TextButton", {
-            Size = UDim2.new(0, 0, 1, 0),
+            Size = UDim2.new(0, 0, 1, -4),
             AutomaticSize = Enum.AutomaticSize.X,
             BackgroundColor3 = Theme.Fill,
             BackgroundTransparency = 1,
             Font = Theme.FontSemibold,
             Text = "  " .. name .. "  ",
-            TextColor3 = Theme.TextSecondary,
+            TextColor3 = Theme.TextTertiary,
             TextSize = 12,
             AutoButtonColor = false,
             LayoutOrder = layoutOrder or 0,
             Parent = TabBar
         })
         Util.Corner(TabButton, Theme.CornerRadiusSmall)
-        
+
         local TabContent = Util.Create("Frame", {
             Size = UDim2.new(1, 0, 0, 0),
             AutomaticSize = Enum.AutomaticSize.Y,
@@ -1678,112 +1931,97 @@ function Kovari:Init(config)
             Visible = false,
             Parent = ContentContainer
         })
-        
-        Util.Create("UIListLayout", {
-            SortOrder = Enum.SortOrder.LayoutOrder,
-            Padding = UDim.new(0, 8),
-            Parent = TabContent
-        })
-        
+        Util.Create("UIListLayout", {SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 8), Parent = TabContent})
+
         tab.Button = TabButton
         tab.Content = TabContent
         tab.Name = name
         tab.AnimatedIn = false
-        
         table.insert(AllTabs, tab)
-        
+
         local function SelectTab()
             if CurrentTab == tab then return end
-            
-            -- Fade out old tab
+
+            -- Deactivate old tab
             if CurrentTab then
-                Util.Tween(CurrentTab.Button, {
-                    BackgroundTransparency = 1,
-                    TextColor3 = Theme.TextSecondary
-                }, Theme.QuickSpeed)
-                
+                Util.Tween(CurrentTab.Button, {BackgroundTransparency = 1, TextColor3 = Theme.TextTertiary}, Theme.QuickSpeed)
                 CurrentTab.Content.Visible = false
                 CurrentTab.AnimatedIn = false
             end
-            
-            -- Set new tab
+
             CurrentTab = tab
-            
-            -- Animate in new tab button
-            Util.Tween(TabButton, {
-                BackgroundTransparency = 0,
-                TextColor3 = Theme.TextPrimary
-            }, Theme.QuickSpeed)
-            
-            -- Show content
+            Util.Tween(TabButton, {BackgroundTransparency = 0.85, TextColor3 = Theme.TextPrimary}, Theme.QuickSpeed)
+
+            -- Animate tab indicator
+            task.defer(function()
+                local pos = TabButton.AbsolutePosition
+                local size = TabButton.AbsoluteSize
+                local barPos = TabBarContainer.AbsolutePosition
+                Util.Tween(TabIndicator, {
+                    Position = UDim2.new(0, pos.X - barPos.X, 1, -2),
+                    Size = UDim2.new(0, size.X, 0, 2)
+                }, Theme.NormalSpeed, Enum.EasingStyle.Quint)
+            end)
+
             TabContent.Visible = true
-            
-            -- Animate content only once
+
             if not tab.AnimatedIn then
                 tab.AnimatedIn = true
-                
                 local sections = {}
                 for _, child in ipairs(TabContent:GetChildren()) do
                     if child:IsA("Frame") and child.Name ~= "UIListLayout" then
                         table.insert(sections, child)
                     end
                 end
-                
-                -- Animate sections with better timing
                 for i, section in ipairs(sections) do
-                    AnimateElement(section, i * 0.08) -- Increased delay between sections
+                    AnimateElement(section, i * 0.07)
                 end
             end
         end
-        
+
         table.insert(Connections, TabButton.MouseButton1Click:Connect(SelectTab))
-        
         table.insert(Connections, TabButton.MouseEnter:Connect(function()
-            if CurrentTab ~= tab then
-                Util.Tween(TabButton, {BackgroundTransparency = 0.5}, Theme.QuickSpeed)
-            end
+            if CurrentTab ~= tab then Util.Tween(TabButton, {BackgroundTransparency = 0.6, TextColor3 = Theme.TextSecondary}, Theme.QuickSpeed) end
         end))
-        
         table.insert(Connections, TabButton.MouseLeave:Connect(function()
-            if CurrentTab ~= tab then
-                Util.Tween(TabButton, {BackgroundTransparency = 1}, Theme.QuickSpeed)
-            end
+            if CurrentTab ~= tab then Util.Tween(TabButton, {BackgroundTransparency = 1, TextColor3 = Theme.TextTertiary}, Theme.QuickSpeed) end
         end))
-        
-        if isDefault or #AllTabs == 1 then
-            task.defer(SelectTab)
-        end
-        
+
+        if isDefault or #AllTabs == 1 then task.defer(SelectTab) end
         return tab
     end
-    
+
+    -- ═══════════════════════════════════════════════════
+    -- PROFILE TAB (built-in)
+    -- ═══════════════════════════════════════════════════
     local function CreateProfileTab()
         local profileTab = CreateTab("Profile", -100, true)
-        
+
         local ProfileContent = Util.Create("Frame", {
-            Size = UDim2.new(1, 0, 0, 230),
+            Size = UDim2.new(1, 0, 0, 240),
             BackgroundTransparency = 1,
             Parent = profileTab.Content
         })
-        
+
+        -- Left panel — avatar + name
         local LeftPanel = Util.Create("Frame", {
-            Size = UDim2.new(0, 160, 1, 0),
+            Size = UDim2.new(0, 165, 1, 0),
             BackgroundColor3 = Theme.Secondary,
             Parent = ProfileContent
         })
         Util.Corner(LeftPanel, Theme.CornerRadius)
         Util.Stroke(LeftPanel, Theme.Border)
-        
+
         local AvatarFrame = Util.Create("Frame", {
             AnchorPoint = Vector2.new(0.5, 0),
-            Size = UDim2.new(0, 90, 0, 90),
-            Position = UDim2.new(0.5, 0, 0, 16),
+            Size = UDim2.new(0, 92, 0, 92),
+            Position = UDim2.new(0.5, 0, 0, 18),
             BackgroundColor3 = Theme.Fill,
             Parent = LeftPanel
         })
         Util.Corner(AvatarFrame, Theme.CornerRadius)
-        Util.Stroke(AvatarFrame, Theme.Border)
-        
+        Util.Stroke(AvatarFrame, Theme.Accent, 2, 0.5)
+
         local Avatar = Util.Create("ImageLabel", {
             Size = UDim2.new(1, -8, 1, -8),
             Position = UDim2.new(0, 4, 0, 4),
@@ -1792,24 +2030,24 @@ function Kovari:Init(config)
             Parent = AvatarFrame
         })
         Util.Corner(Avatar, 8)
-        
-        local DisplayName = Util.Create("TextLabel", {
+
+        Util.Create("TextLabel", {
             AnchorPoint = Vector2.new(0.5, 0),
             Size = UDim2.new(1, -20, 0, 18),
-            Position = UDim2.new(0.5, 0, 0, 114),
+            Position = UDim2.new(0.5, 0, 0, 118),
             BackgroundTransparency = 1,
             Font = Theme.FontBold,
             Text = LocalPlayer.DisplayName,
             TextColor3 = Theme.TextPrimary,
-            TextSize = 14,
+            TextSize = 15,
             TextTruncate = Enum.TextTruncate.AtEnd,
             Parent = LeftPanel
         })
-        
-        local Username = Util.Create("TextLabel", {
+
+        Util.Create("TextLabel", {
             AnchorPoint = Vector2.new(0.5, 0),
             Size = UDim2.new(1, -20, 0, 14),
-            Position = UDim2.new(0.5, 0, 0, 134),
+            Position = UDim2.new(0.5, 0, 0, 138),
             BackgroundTransparency = 1,
             Font = Theme.FontMedium,
             Text = "@" .. LocalPlayer.Name,
@@ -1818,26 +2056,27 @@ function Kovari:Init(config)
             TextTruncate = Enum.TextTruncate.AtEnd,
             Parent = LeftPanel
         })
-        
-        local AccentBar = Util.Create("Frame", {
+
+        local AccentBarProfile = Util.Create("Frame", {
             AnchorPoint = Vector2.new(0.5, 0),
             Size = UDim2.new(0, 40, 0, 3),
-            Position = UDim2.new(0.5, 0, 0, 156),
+            Position = UDim2.new(0.5, 0, 0, 160),
             BackgroundColor3 = Theme.Accent,
             Parent = LeftPanel
         })
-        Util.Corner(AccentBar, 2)
-        
+        Util.Corner(AccentBarProfile, 2)
+
+        -- Discord copy button
         local DiscordFrame = Util.Create("Frame", {
             AnchorPoint = Vector2.new(0.5, 1),
-            Size = UDim2.new(1, -20, 0, 34),
-            Position = UDim2.new(0.5, 0, 1, -10),
+            Size = UDim2.new(1, -20, 0, 36),
+            Position = UDim2.new(0.5, 0, 1, -12),
             BackgroundColor3 = Theme.Fill,
             Parent = LeftPanel
         })
         Util.Corner(DiscordFrame, Theme.CornerRadiusSmall)
         Util.Stroke(DiscordFrame, Theme.Border)
-        
+
         local DiscordText = Util.Create("TextLabel", {
             Size = UDim2.new(1, -16, 1, 0),
             Position = UDim2.new(0, 8, 0, 0),
@@ -1850,48 +2089,51 @@ function Kovari:Init(config)
             TextTruncate = Enum.TextTruncate.AtEnd,
             Parent = DiscordFrame
         })
-        
-        local DiscordButton = Util.Create("TextButton", {
+
+        local DiscordCopyBtn = Util.Create("TextButton", {
             Size = UDim2.new(1, 0, 1, 0),
             BackgroundTransparency = 1,
             Text = "",
             Parent = DiscordFrame
         })
-        
-        local copying = false
-        table.insert(Connections, DiscordButton.MouseButton1Click:Connect(function()
-            if copying then return end
-            copying = true
-            pcall(function()
-                (setclipboard or toclipboard or function() end)(discordInvite)
-            end)
-            
-            local orig = DiscordText.Text
-            DiscordText.Text = "Copied!"
+
+        local dcCopying = false
+        table.insert(Connections, DiscordCopyBtn.MouseButton1Click:Connect(function()
+            if dcCopying then return end
+            dcCopying = true
+            pcall(function() (setclipboard or toclipboard or function() end)(discordInvite) end)
+            DiscordText.Text = "✓ Copied!"
             DiscordText.TextColor3 = Theme.Success
-            Util.Tween(DiscordFrame, {BackgroundColor3 = Theme.AccentMuted}, Theme.QuickSpeed)
-            
             task.delay(1.2, function()
-                DiscordText.Text = orig
+                DiscordText.Text = discordInvite
                 DiscordText.TextColor3 = Theme.TextSecondary
-                Util.Tween(DiscordFrame, {BackgroundColor3 = Theme.Fill}, Theme.QuickSpeed)
-                copying = false
+                dcCopying = false
             end)
         end))
-        
+
+        -- Right panel — account info
         local RightPanel = Util.Create("Frame", {
             AnchorPoint = Vector2.new(1, 0),
             Position = UDim2.new(1, 0, 0, 0),
-            Size = UDim2.new(1, -170, 1, 0),
+            Size = UDim2.new(1, -175, 1, 0),
             BackgroundColor3 = Theme.Secondary,
             Parent = ProfileContent
         })
         Util.Corner(RightPanel, Theme.CornerRadius)
         Util.Stroke(RightPanel, Theme.Border)
-        
-        local InfoHeader = Util.Create("TextLabel", {
-            Size = UDim2.new(1, -24, 0, 22),
-            Position = UDim2.new(0, 12, 0, 12),
+
+        local InfoAccent = Util.Create("Frame", {
+            Size = UDim2.new(0, 3, 0, 16),
+            Position = UDim2.new(0, 12, 0, 14),
+            BackgroundColor3 = Theme.Accent,
+            BorderSizePixel = 0,
+            Parent = RightPanel
+        })
+        Util.Corner(InfoAccent, 2)
+
+        Util.Create("TextLabel", {
+            Size = UDim2.new(1, -36, 0, 22),
+            Position = UDim2.new(0, 22, 0, 12),
             BackgroundTransparency = 1,
             Font = Theme.FontBold,
             Text = "Account Information",
@@ -1900,93 +2142,67 @@ function Kovari:Init(config)
             TextXAlignment = Enum.TextXAlignment.Left,
             Parent = RightPanel
         })
-        
-        local InfoDivider = Util.Create("Frame", {
+
+        Util.Create("Frame", {
             Size = UDim2.new(1, -24, 0, 1),
-            Position = UDim2.new(0, 12, 0, 38),
+            Position = UDim2.new(0, 12, 0, 40),
             BackgroundColor3 = Theme.Separator,
             BorderSizePixel = 0,
             Parent = RightPanel
         })
-        
+
         local InfoList = Util.Create("Frame", {
             Size = UDim2.new(1, -24, 1, -52),
-            Position = UDim2.new(0, 12, 0, 44),
+            Position = UDim2.new(0, 12, 0, 46),
             BackgroundTransparency = 1,
             Parent = RightPanel
         })
-        
-        Util.Create("UIListLayout", {
-            SortOrder = Enum.SortOrder.LayoutOrder,
-            Padding = UDim.new(0, 0),
-            Parent = InfoList
-        })
-        
+        Util.Create("UIListLayout", {SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 0), Parent = InfoList})
+
         local function InfoRow(label, value)
-            local row = Util.Create("Frame", {
-                Size = UDim2.new(1, 0, 0, 34),
-                BackgroundTransparency = 1,
-                Parent = InfoList
-            })
-            
+            local row = Util.Create("Frame", {Size = UDim2.new(1, 0, 0, 36), BackgroundTransparency = 1, Parent = InfoList})
             Util.Create("TextLabel", {
-                Size = UDim2.new(0.45, 0, 1, 0),
-                BackgroundTransparency = 1,
-                Font = Theme.FontMedium,
-                Text = label,
-                TextColor3 = Theme.TextSecondary,
-                TextSize = 11,
-                TextXAlignment = Enum.TextXAlignment.Left,
-                Parent = row
+                Size = UDim2.new(0.45, 0, 1, 0), BackgroundTransparency = 1,
+                Font = Theme.FontMedium, Text = label, TextColor3 = Theme.TextSecondary,
+                TextSize = 11, TextXAlignment = Enum.TextXAlignment.Left, Parent = row
             })
-            
             Util.Create("TextLabel", {
-                AnchorPoint = Vector2.new(1, 0),
-                Size = UDim2.new(0.53, 0, 1, 0),
-                Position = UDim2.new(1, 0, 0, 0),
-                BackgroundTransparency = 1,
-                Font = Theme.FontSemibold,
-                Text = value,
-                TextColor3 = Theme.TextPrimary,
-                TextSize = 11,
-                TextXAlignment = Enum.TextXAlignment.Right,
-                TextTruncate = Enum.TextTruncate.AtEnd,
-                Parent = row
+                AnchorPoint = Vector2.new(1, 0), Size = UDim2.new(0.53, 0, 1, 0),
+                Position = UDim2.new(1, 0, 0, 0), BackgroundTransparency = 1,
+                Font = Theme.FontSemibold, Text = value, TextColor3 = Theme.TextPrimary,
+                TextSize = 11, TextXAlignment = Enum.TextXAlignment.Right,
+                TextTruncate = Enum.TextTruncate.AtEnd, Parent = row
             })
-            
             Util.Create("Frame", {
-                AnchorPoint = Vector2.new(0, 1),
-                Size = UDim2.new(1, 0, 0, 1),
-                Position = UDim2.new(0, 0, 1, 0),
-                BackgroundColor3 = Theme.Separator,
-                BorderSizePixel = 0,
-                Parent = row
+                AnchorPoint = Vector2.new(0, 1), Size = UDim2.new(1, 0, 0, 1),
+                Position = UDim2.new(0, 0, 1, 0), BackgroundColor3 = Theme.Separator,
+                BorderSizePixel = 0, Parent = row
             })
         end
-        
+
         InfoRow("User ID", tostring(LocalPlayer.UserId))
         InfoRow("Account Age", tostring(LocalPlayer.AccountAge) .. " days")
         InfoRow("Join Date", Util.FormatDate(os.time() - (LocalPlayer.AccountAge * 86400)))
         InfoRow("Current Game", Util.GetGameName())
         InfoRow("Server ID", game.JobId ~= "" and (game.JobId:sub(1, 14) .. "...") or "Studio")
-        
+
         return profileTab
     end
-    
+
     CreateProfileTab()
-    
+
+    -- ── Toggle keybind ──
     table.insert(Connections, UserInputService.InputBegan:Connect(function(input, gpe)
         if not gpe and input.KeyCode == toggleKey and not Toggling then
             Toggling = true
             UIVisible = not UIVisible
-            
             if UIVisible then
                 Main.Visible = true
-                Main.Size = UDim2.new(0, 580, 0, 0)
-                Util.Spring(Main, {Size = UDim2.new(0, 580, 0, 380)}, Theme.SpringSpeed)
+                Main.Size = UDim2.new(0, 600, 0, 0)
+                Util.Spring(Main, {Size = UDim2.new(0, 600, 0, 400)}, Theme.SpringSpeed)
                 task.delay(Theme.SpringSpeed, function() Toggling = false end)
             else
-                Util.Tween(Main, {Size = UDim2.new(0, 580, 0, 0)}, Theme.NormalSpeed)
+                Util.Tween(Main, {Size = UDim2.new(0, 600, 0, 0)}, Theme.NormalSpeed)
                 task.delay(Theme.NormalSpeed, function()
                     if not UIVisible then Main.Visible = false end
                     Toggling = false
@@ -1994,12 +2210,15 @@ function Kovari:Init(config)
             end
         end
     end))
-    
+
+    -- ═══════════════════════════════════════════════════
+    -- PUBLIC API
+    -- ═══════════════════════════════════════════════════
     local API = {
         Gui = ScreenGui,
         Main = Main,
         Theme = Theme,
-        
+
         CreateTab = function(_, name, isDefault)
             local tab = CreateTab(name, #AllTabs, isDefault)
             local TabAPI = {}
@@ -2008,93 +2227,126 @@ function Kovari:Init(config)
             end
             return TabAPI
         end,
-        
+
         SetStatus = function(_, text, color)
             StatusText.Text = text
             StatusText.TextColor3 = color or Theme.TextSecondary
             StatusDot.BackgroundColor3 = color or Theme.TextSecondary
         end,
-        
+
         SetToggleKey = function(_, key)
             toggleKey = key
         end,
-        
+
         SetScale = function(_, scale)
             UIScaleValue = scale
             Util.Tween(UIScale, {Scale = scale / 100}, Theme.QuickSpeed)
         end,
-        
+
         Destroy = function(_)
             for _, conn in ipairs(Connections) do conn:Disconnect() end
-            Util.Tween(Main, {Size = UDim2.new(0, 540, 0, 0)}, Theme.NormalSpeed)
+            Util.Tween(Main, {Size = UDim2.new(0, 560, 0, 0)}, Theme.NormalSpeed)
             task.delay(Theme.NormalSpeed + 0.1, function()
                 ScreenGui:Destroy()
                 _G.KovariLoaded = false
                 _G.KovariInstance = nil
             end)
         end,
-        
+
         Notify = function(_, title, message, duration)
             duration = duration or 3
+
             local NotifFrame = Util.Create("Frame", {
                 AnchorPoint = Vector2.new(1, 1),
                 Position = UDim2.new(1, 20, 1, -20),
-                Size = UDim2.new(0, 280, 0, 70),
+                Size = UDim2.new(0, 300, 0, 78),
                 BackgroundColor3 = Theme.Secondary,
                 Parent = ScreenGui
             })
             Util.Corner(NotifFrame, Theme.CornerRadius)
             Util.Stroke(NotifFrame, Theme.Border, 1)
-            
+            Util.Shadow(NotifFrame, 4, 0.5)
+
+            -- Accent left bar
+            local NotifAccent = Util.Create("Frame", {
+                Size = UDim2.new(0, 3, 1, -16),
+                Position = UDim2.new(0, 10, 0, 8),
+                BackgroundColor3 = Theme.Accent,
+                BorderSizePixel = 0,
+                Parent = NotifFrame
+            })
+            Util.Corner(NotifAccent, 2)
+
             Util.Create("TextLabel", {
-                Size = UDim2.new(1, -20, 0, 20),
-                Position = UDim2.new(0, 10, 0, 12),
+                Size = UDim2.new(1, -30, 0, 20),
+                Position = UDim2.new(0, 20, 0, 14),
                 BackgroundTransparency = 1,
                 Font = Theme.FontBold,
                 Text = title or "Notification",
                 TextColor3 = Theme.TextPrimary,
-                TextSize = 13,
+                TextSize = 14,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 Parent = NotifFrame
             })
-            
+
             Util.Create("TextLabel", {
-                Size = UDim2.new(1, -20, 0, 30),
-                Position = UDim2.new(0, 10, 0, 34),
+                Size = UDim2.new(1, -30, 0, 30),
+                Position = UDim2.new(0, 20, 0, 38),
                 BackgroundTransparency = 1,
                 Font = Theme.FontMedium,
                 Text = message or "",
                 TextColor3 = Theme.TextSecondary,
-                TextSize = 11,
+                TextSize = 12,
                 TextXAlignment = Enum.TextXAlignment.Left,
                 TextWrapped = true,
                 Parent = NotifFrame
             })
-            
+
+            -- Progress bar
+            local ProgressTrack = Util.Create("Frame", {
+                Size = UDim2.new(1, -20, 0, 2),
+                Position = UDim2.new(0, 10, 1, -6),
+                BackgroundColor3 = Theme.Fill,
+                BorderSizePixel = 0,
+                Parent = NotifFrame
+            })
+            Util.Corner(ProgressTrack, 1)
+
+            local ProgressFill = Util.Create("Frame", {
+                Size = UDim2.new(1, 0, 1, 0),
+                BackgroundColor3 = Theme.Accent,
+                BorderSizePixel = 0,
+                Parent = ProgressTrack
+            })
+            Util.Corner(ProgressFill, 1)
+
+            -- Slide in
             Util.Spring(NotifFrame, {Position = UDim2.new(1, -20, 1, -20)}, Theme.NormalSpeed)
+
+            -- Progress animation
+            Util.Tween(ProgressFill, {Size = UDim2.new(0, 0, 1, 0)}, duration, Enum.EasingStyle.Linear)
+
+            -- Slide out
             task.delay(duration, function()
                 Util.Tween(NotifFrame, {Position = UDim2.new(1, 20, 1, -20)}, Theme.NormalSpeed)
                 task.delay(Theme.NormalSpeed + 0.1, function() NotifFrame:Destroy() end)
             end)
         end
     }
-    
+
+    -- ── Built-in Settings Tab ──
     local SettingsTab = API:CreateTab("Settings", false)
-    
+
     local UISection = SettingsTab:AddSection("Interface")
     UISection:AddSlider({Name = "UI Scale", Min = 50, Max = 150, Default = 100, Suffix = "%", Callback = function(v) API:SetScale(v) end})
     UISection:AddToggle({Name = "Smooth Animations", Default = true, Callback = function(state)
         if state then
-            Theme.QuickSpeed = 0.12
-            Theme.NormalSpeed = 0.2
-            Theme.SlowSpeed = 0.35
+            Theme.QuickSpeed = 0.12; Theme.NormalSpeed = 0.2; Theme.SlowSpeed = 0.35
         else
-            Theme.QuickSpeed = 0.06
-            Theme.NormalSpeed = 0.1
-            Theme.SlowSpeed = 0.15
+            Theme.QuickSpeed = 0.06; Theme.NormalSpeed = 0.1; Theme.SlowSpeed = 0.15
         end
     end})
-    
+
     local UtilSection = SettingsTab:AddSection("Utility")
     UtilSection:AddButton({Name = "Copy Discord Invite", ButtonText = "Copy", Callback = function()
         pcall(function() (setclipboard or toclipboard or function() end)(discordInvite) end)
@@ -2108,7 +2360,6 @@ function Kovari:Init(config)
             local servers = {}
             local req = game:HttpGet(string.format("https://games.roblox.com/v1/games/%d/servers/Public?sortOrder=Asc&limit=100", game.PlaceId))
             local body = HttpService:JSONDecode(req)
-            
             if body and body.data then
                 for _, server in pairs(body.data) do
                     if server.playing < server.maxPlayers and server.id ~= game.JobId then
@@ -2116,29 +2367,26 @@ function Kovari:Init(config)
                     end
                 end
             end
-            
             if #servers > 0 then
-                local randomServer = servers[math.random(1, #servers)]
-                TeleportService:TeleportToPlaceInstance(game.PlaceId, randomServer, LocalPlayer)
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, servers[math.random(1, #servers)], LocalPlayer)
             else
                 API:Notify("Server Hop", "No available servers found!", 3)
             end
         end)
-        
-        if not success then
-            API:Notify("Error", "Failed to server hop: " .. tostring(result), 3)
-        end
+        if not success then API:Notify("Error", "Failed to server hop: " .. tostring(result), 3) end
     end})
-    
+
     local DangerSection = SettingsTab:AddSection("Danger Zone")
     DangerSection:AddButton({Name = "Destroy UI", ButtonText = "Destroy", Callback = function() API:Destroy() end})
-    
+
     return API
 end
 
+-- ═══════════════════════════════════════════════════════
+-- ENTRY POINT — Kovari:Load()
+-- ═══════════════════════════════════════════════════════
 function Kovari:Load(config)
     config = config or {}
-    
     if config.KeySystem then
         local keyConfig = config.KeySystem
         keyConfig.OnSuccess = function()
