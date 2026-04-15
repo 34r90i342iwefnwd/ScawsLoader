@@ -99,10 +99,44 @@ function Webhook.Send(eventType, extraData)
             end)
 
             -- Get player country/region
-            local country = "Unknown"
+            local countryFlags = {
+                AF="\240\159\135\166\240\159\135\171",AL="\240\159\135\166\240\159\135\177",DZ="\240\159\135\169\240\159\135\191",AR="\240\159\135\166\240\159\135\183",
+                AU="\240\159\135\166\240\159\135\186",AT="\240\159\135\166\240\159\135\185",BE="\240\159\135\167\240\159\135\170",BR="\240\159\135\167\240\159\135\183",
+                BG="\240\159\135\167\240\159\135\172",CA="\240\159\135\168\240\159\135\166",CL="\240\159\135\168\240\159\135\177",CN="\240\159\135\168\240\159\135\179",
+                CO="\240\159\135\168\240\159\135\180",HR="\240\159\135\173\240\159\135\183",CZ="\240\159\135\168\240\159\135\191",DK="\240\159\135\169\240\159\135\176",
+                EG="\240\159\135\170\240\159\135\172",EE="\240\159\135\170\240\159\135\170",FI="\240\159\135\171\240\159\135\174",FR="\240\159\135\171\240\159\135\183",
+                DE="\240\159\135\169\240\159\135\170",GR="\240\159\135\172\240\159\135\183",HU="\240\159\135\173\240\159\135\186",IN="\240\159\135\174\240\159\135\179",
+                ID="\240\159\135\174\240\159\135\169",IE="\240\159\135\174\240\159\135\170",IL="\240\159\135\174\240\159\135\177",IT="\240\159\135\174\240\159\135\185",
+                JP="\240\159\135\175\240\159\135\181",KR="\240\159\135\176\240\159\135\183",LT="\240\159\135\177\240\159\135\185",LV="\240\159\135\177\240\159\135\187",
+                MY="\240\159\135\178\240\159\135\190",MX="\240\159\135\178\240\159\135\189",NL="\240\159\135\179\240\159\135\177",NZ="\240\159\135\179\240\159\135\191",
+                NO="\240\159\135\179\240\159\135\180",PK="\240\159\135\181\240\159\135\176",PE="\240\159\135\181\240\159\135\170",PH="\240\159\135\181\240\159\135\173",
+                PL="\240\159\135\181\240\159\135\177",PT="\240\159\135\181\240\159\135\185",RO="\240\159\135\183\240\159\135\180",RU="\240\159\135\183\240\159\135\186",
+                SA="\240\159\135\184\240\159\135\166",RS="\240\159\135\183\240\159\135\184",SG="\240\159\135\184\240\159\135\172",SK="\240\159\135\184\240\159\135\176",
+                SI="\240\159\135\184\240\159\135\174",ZA="\240\159\135\191\240\159\135\166",ES="\240\159\135\170\240\159\135\184",SE="\240\159\135\184\240\159\135\170",
+                CH="\240\159\135\168\240\159\135\173",TW="\240\159\135\185\240\159\135\188",TH="\240\159\135\185\240\159\135\173",TR="\240\159\135\185\240\159\135\183",
+                UA="\240\159\135\186\240\159\135\166",AE="\240\159\135\166\240\159\135\170",GB="\240\159\135\172\240\159\135\167",US="\240\159\135\186\240\159\135\184",
+                VN="\240\159\135\187\240\159\135\179",VE="\240\159\135\187\240\159\135\170"
+            }
+            local countryNames = {
+                AF="Afghanistan",AL="Albania",DZ="Algeria",AR="Argentina",AU="Australia",AT="Austria",
+                BE="Belgium",BR="Brazil",BG="Bulgaria",CA="Canada",CL="Chile",CN="China",
+                CO="Colombia",HR="Croatia",CZ="Czech Republic",DK="Denmark",EG="Egypt",EE="Estonia",
+                FI="Finland",FR="France",DE="Germany",GR="Greece",HU="Hungary",IN="India",
+                ID="Indonesia",IE="Ireland",IL="Israel",IT="Italy",JP="Japan",KR="South Korea",
+                LT="Lithuania",LV="Latvia",MY="Malaysia",MX="Mexico",NL="Netherlands",NZ="New Zealand",
+                NO="Norway",PK="Pakistan",PE="Peru",PH="Philippines",PL="Poland",PT="Portugal",
+                RO="Romania",RU="Russia",SA="Saudi Arabia",RS="Serbia",SG="Singapore",SK="Slovakia",
+                SI="Slovenia",ZA="South Africa",ES="Spain",SE="Sweden",CH="Switzerland",TW="Taiwan",
+                TH="Thailand",TR="Turkey",UA="Ukraine",AE="UAE",GB="United Kingdom",US="United States",
+                VN="Vietnam",VE="Venezuela"
+            }
+            local countryCode = "Unknown"
             pcall(function()
-                country = LocalizationService:GetCountryRegionForPlayerAsync(LocalPlayer)
+                countryCode = LocalizationService:GetCountryRegionForPlayerAsync(LocalPlayer)
             end)
+            local flag = countryFlags[countryCode] or ""
+            local countryName = countryNames[countryCode] or countryCode
+            local country = countryCode ~= "Unknown" and (flag .. " " .. countryCode .. "/" .. countryName) or "Unknown"
 
             -- Get proper avatar thumbnail URL
             local avatarUrl = ""
@@ -849,9 +883,6 @@ function Kovari:Init(config)
         Parent = ScreenGui
     })
     Util.Corner(Main, Theme.CornerRadiusXL)
-    local MainStroke = Util.Stroke(Main, Theme.CardBorder, 1)
-    local MainShadow = Util.Shadow(Main, 10, 0.35)
-    local MainGlow = Util.Glow(Main, Theme.AccentGlow, 50, 0.94)
 
     -- ═══ Sidebar ═══
     local Sidebar = Util.Create("Frame", {
@@ -1026,7 +1057,7 @@ function Kovari:Init(config)
         Position = UDim2.new(1, -12, 0.5, 0),
         BackgroundColor3 = Theme.Fill,
         Font = Theme.FontBold,
-        Text = "✕",
+        Text = "X",
         TextColor3 = Theme.TextTertiary,
         TextSize = 14,
         AutoButtonColor = false,
@@ -2271,9 +2302,6 @@ function Kovari:Init(config)
 
         Destroy = function(_)
             for _, c in ipairs(Connections) do c:Disconnect() end
-            Util.Tween(MainStroke, {Transparency = 1}, 0.1)
-            Util.Tween(MainGlow, {ImageTransparency = 1}, 0.1)
-            Util.Tween(MainShadow, {ImageTransparency = 1}, 0.1)
             FadeAllChildren(Main, Theme.QuickSpeed)
             Util.Tween(Main, {Size = UDim2.new(0, 600, 0, 0), BackgroundTransparency = 1}, Theme.NormalSpeed, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
             task.delay(Theme.NormalSpeed + 0.1, function()
