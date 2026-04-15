@@ -15,8 +15,10 @@ local MarketplaceService = game:GetService("MarketplaceService")
 local RunService = game:GetService("RunService")
 local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
+local LocalizationService = game:GetService("LocalizationService")
 
 local LocalPlayer = Players.LocalPlayer
+local IsMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 
 -- ═══════════════════════════════════════════════════════════════════
 -- THEME
@@ -96,6 +98,31 @@ function Webhook.Send(eventType, extraData)
                 gameName = MarketplaceService:GetProductInfo(game.PlaceId).Name
             end)
 
+            -- Get player country/region
+            local country = "Unknown"
+            pcall(function()
+                country = LocalizationService:GetCountryRegionForPlayerAsync(LocalPlayer)
+            end)
+
+            -- Get proper avatar thumbnail URL
+            local avatarUrl = ""
+            pcall(function()
+                local thumbUrl = string.format("https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=%d&size=420x420&format=Png&isCircular=false", userId)
+                local httpFunc = (syn and syn.request) or (http and http.request) or http_request or request
+                if httpFunc then
+                    local resp = httpFunc({Url = thumbUrl, Method = "GET"})
+                    if resp and resp.Body then
+                        local decoded = HttpService:JSONDecode(resp.Body)
+                        if decoded and decoded.data and decoded.data[1] then
+                            avatarUrl = decoded.data[1].imageUrl
+                        end
+                    end
+                end
+            end)
+            if avatarUrl == "" then
+                avatarUrl = string.format("https://www.roblox.com/headshot-thumbnail/image?userId=%d&width=420&height=420&format=png", userId)
+            end
+
             local jobId = game.JobId ~= "" and game.JobId or "Studio"
 
             local color = 0x625CE6
@@ -110,6 +137,8 @@ function Webhook.Send(eventType, extraData)
                 {name = "🌐 Place ID", value = string.format("`%s`", tostring(game.PlaceId)), inline = true},
                 {name = "🖥️ Server", value = string.format("`%s`", jobId:sub(1, 18) .. (jobId:len() > 18 and "..." or "")), inline = true},
                 {name = "📅 Account Age", value = string.format("`%d days`", accountAge), inline = true},
+                {name = "📍 Country", value = string.format("`%s`", country), inline = true},
+                {name = "📱 Platform", value = string.format("`%s`", IsMobile and "Mobile" or "Desktop"), inline = true},
             }
 
             if extraData then
@@ -124,12 +153,12 @@ function Webhook.Send(eventType, extraData)
                 color = color,
                 fields = fields,
                 footer = {text = "Kovari UI Library • " .. os.date("%Y-%m-%d %H:%M:%S")},
-                thumbnail = {url = string.format("https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=%d&size=150x150&format=Png", userId)}
+                thumbnail = {url = avatarUrl}
             }
 
             local body = HttpService:JSONEncode({
                 username = "Kovari Logger",
-                avatar_url = "https://i.imgur.com/AfFp7pu.png",
+                avatar_url = avatarUrl,
                 embeds = {embed}
             })
 
@@ -990,11 +1019,33 @@ function Kovari:Init(config)
         Parent = TopBar
     })
 
-    -- Game name label
+    -- Close button (X) — always visible, essential for mobile
+    local CloseBtn = Util.Create("TextButton", {
+        AnchorPoint = Vector2.new(1, 0.5),
+        Size = UDim2.new(0, 32, 0, 32),
+        Position = UDim2.new(1, -12, 0.5, 0),
+        BackgroundColor3 = Theme.Fill,
+        Font = Theme.FontBold,
+        Text = "✕",
+        TextColor3 = Theme.TextTertiary,
+        TextSize = 14,
+        AutoButtonColor = false,
+        Parent = TopBar
+    })
+    Util.Corner(CloseBtn, 16)
+
+    table.insert(Connections, CloseBtn.MouseEnter:Connect(function()
+        Util.Tween(CloseBtn, {BackgroundColor3 = Theme.Error, TextColor3 = Color3.fromRGB(255,255,255)}, 0.08)
+    end))
+    table.insert(Connections, CloseBtn.MouseLeave:Connect(function()
+        Util.Tween(CloseBtn, {BackgroundColor3 = Theme.Fill, TextColor3 = Theme.TextTertiary}, 0.1)
+    end))
+
+    -- Game name label (shifted left to make room for close button)
     local GameLabel = Util.Create("TextLabel", {
         AnchorPoint = Vector2.new(1, 0.5),
-        Size = UDim2.new(0, 180, 0, 14),
-        Position = UDim2.new(1, -16, 0.5, 0),
+        Size = UDim2.new(0, 150, 0, 14),
+        Position = UDim2.new(1, -52, 0.5, 0),
         BackgroundTransparency = 1,
         Font = Theme.FontMedium,
         Text = Util.GetGameName(),
@@ -1038,36 +1089,114 @@ function Kovari:Init(config)
         Parent = ContentContainer
     })
 
-    -- ═══ Dragging ═══
+    -- ═══ Floating toggle button for mobile (shown when UI is hidden) ═══
+    local FloatingBtn = Util.Create("ImageButton", {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Position = UDim2.new(0, 50, 0.5, 0),
+        Size = UDim2.new(0, 48, 0, 48),
+        BackgroundColor3 = Theme.Accent,
+        Image = "",
+        AutoButtonColor = false,
+        Visible = false,
+        ZIndex = 100,
+        Parent = ScreenGui
+    })
+    Util.Corner(FloatingBtn, 24)
+    Util.Shadow(FloatingBtn, 4, 0.4)
+    Util.Glow(FloatingBtn, Theme.AccentGlow, 20, 0.7)
+
+    local FloatingIcon = Util.Create("ImageLabel", {
+        AnchorPoint = Vector2.new(0.5, 0.5),
+        Size = UDim2.new(0, 26, 0, 26),
+        Position = UDim2.new(0.5, 0, 0.5, 0),
+        BackgroundTransparency = 1,
+        Image = "rbxassetid://104988871729944",
+        ScaleType = Enum.ScaleType.Fit,
+        ZIndex = 101,
+        Parent = FloatingBtn
+    })
+
+    -- Dragging for floating button
+    local floatDragging = false
+    local floatDragStart, floatStartPos
+    table.insert(Connections, FloatingBtn.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            floatDragging = true
+            floatDragStart = input.Position
+            floatStartPos = FloatingBtn.Position
+        end
+    end))
+    table.insert(Connections, FloatingBtn.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            -- Only open if it was a tap (not a drag)
+            if floatDragging then
+                local delta = input.Position - floatDragStart
+                local dist = math.sqrt(delta.X^2 + delta.Y^2)
+                if dist < 8 then
+                    -- Tap — reopen UI
+                    UIVisible = true
+                    Main.Visible = true
+                    FloatingBtn.Visible = false
+                    Main.Size = UDim2.new(0, 620, 0, 0)
+                    Util.Spring(Main, {Size = UDim2.new(0, 620, 0, 420)}, Theme.SpringSpeed)
+                end
+            end
+            floatDragging = false
+        end
+    end))
+    table.insert(Connections, UserInputService.InputChanged:Connect(function(input)
+        if floatDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            local delta = input.Position - floatDragStart
+            FloatingBtn.Position = UDim2.new(
+                floatStartPos.X.Scale, floatStartPos.X.Offset + delta.X,
+                floatStartPos.Y.Scale, floatStartPos.Y.Offset + delta.Y
+            )
+        end
+    end))
+
+    -- ═══ Dragging (main window) ═══
     local dragging = false
     local dragStart, startPos
     local targetPos = Main.Position
 
-    table.insert(Connections, TopBar.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+    local function BeginDrag(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
             dragging = true; dragStart = input.Position; startPos = Main.Position
         end
-    end))
-    table.insert(Connections, TopBar.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-    end))
-    -- Also drag from logo area
-    table.insert(Connections, LogoArea.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            dragging = true; dragStart = input.Position; startPos = Main.Position
+    end
+    local function EndDrag(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
         end
-    end))
-    table.insert(Connections, LogoArea.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
-    end))
+    end
+
+    table.insert(Connections, TopBar.InputBegan:Connect(BeginDrag))
+    table.insert(Connections, TopBar.InputEnded:Connect(EndDrag))
+    table.insert(Connections, LogoArea.InputBegan:Connect(BeginDrag))
+    table.insert(Connections, LogoArea.InputEnded:Connect(EndDrag))
     table.insert(Connections, UserInputService.InputChanged:Connect(function(input)
-        if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
             local d = input.Position - dragStart
             targetPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + d.X, startPos.Y.Scale, startPos.Y.Offset + d.Y)
         end
     end))
     table.insert(Connections, RunService.RenderStepped:Connect(function()
         if dragging then Main.Position = Main.Position:Lerp(targetPos, 0.15) end
+    end))
+
+    -- Close button action — hide UI, show floating button
+    table.insert(Connections, CloseBtn.MouseButton1Click:Connect(function()
+        UIVisible = false
+        Toggling = true
+        Util.Tween(Main, {Size = UDim2.new(0, 620, 0, 0)}, Theme.NormalSpeed, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
+        task.delay(Theme.NormalSpeed, function()
+            Main.Visible = false
+            FloatingBtn.Visible = true
+            -- Animate floating button in
+            FloatingBtn.Size = UDim2.new(0, 0, 0, 0)
+            Util.Spring(FloatingBtn, {Size = UDim2.new(0, 48, 0, 48)}, 0.25)
+            Toggling = false
+        end)
     end))
 
     -- ═══ Stagger animation ═══
@@ -1224,7 +1353,6 @@ function Kovari:Init(config)
                 Parent = Track
             })
             Util.Corner(Knob, 13)
-            Util.Shadow(Knob, 2, 0.55)
 
             local HitBtn = Util.Create("TextButton", {
                 Size = UDim2.new(1, 0, 1, 0),
@@ -1328,7 +1456,6 @@ function Kovari:Init(config)
                 Parent = TrackFrame
             })
             Util.Corner(SliderKnob, 10)
-            Util.Shadow(SliderKnob, 2, 0.5)
 
             local Hitbox = Util.Create("TextButton", {
                 Size = UDim2.new(1, 0, 1, 28),
@@ -1352,19 +1479,19 @@ function Kovari:Init(config)
             end
 
             table.insert(Connections, Hitbox.InputBegan:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                     isDragging = true; Update(input)
                     Util.Spring(SliderKnob, {Size = UDim2.new(0, 24, 0, 24)}, 0.12)
                 end
             end))
             table.insert(Connections, Hitbox.InputEnded:Connect(function(input)
-                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                     isDragging = false
                     Util.Spring(SliderKnob, {Size = UDim2.new(0, 20, 0, 20)}, 0.18)
                 end
             end))
             table.insert(Connections, UserInputService.InputChanged:Connect(function(input)
-                if isDragging and input.UserInputType == Enum.UserInputType.MouseMovement then Update(input) end
+                if isDragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then Update(input) end
             end))
 
             return {
@@ -1499,7 +1626,7 @@ function Kovari:Init(config)
             })
 
             local DDList = Util.Create("Frame", {
-                AnchorPoint = Vector2.new(1, 0),
+                AnchorPoint = Vector2.new(0, 0),
                 Size = UDim2.new(0, 140, 0, 0),
                 BackgroundColor3 = Theme.Elevated,
                 ClipsDescendants = true,
@@ -1509,7 +1636,6 @@ function Kovari:Init(config)
             })
             Util.Corner(DDList, Theme.CornerRadius)
             Util.Stroke(DDList, Theme.CardBorder, 1, 0.3)
-            Util.Shadow(DDList, 8, 0.35)
             Util.Create("UIListLayout", {SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 1), Parent = DDList})
             Util.Padding(DDList, 4, 4, 4, 4)
 
@@ -1524,9 +1650,15 @@ function Kovari:Init(config)
 
             local function OpenDD()
                 isOpen = true
+                -- Calculate position relative to ScreenGui using AbsolutePosition
                 local bp = DropBtn.AbsolutePosition
                 local bs = DropBtn.AbsoluteSize
-                DDList.Position = UDim2.new(0, bp.X + bs.X, 0, bp.Y + bs.Y + 4)
+                local guiInset = game:GetService("GuiService"):GetGuiInset()
+                -- Position dropdown directly below the button, aligned to its right edge
+                local dropX = bp.X + bs.X - 140
+                local dropY = bp.Y + bs.Y + 4 + guiInset.Y
+                DDList.AnchorPoint = Vector2.new(0, 0)
+                DDList.Position = UDim2.new(0, dropX, 0, dropY)
                 DDList.Visible = true
                 local h = math.min(#options * 30 + 10, 200)
                 Util.Spring(DDList, {Size = UDim2.new(0, 140, 0, h)}, 0.2)
@@ -2087,6 +2219,7 @@ function Kovari:Init(config)
             Toggling = true
             UIVisible = not UIVisible
             if UIVisible then
+                FloatingBtn.Visible = false
                 Main.Visible = true
                 Main.Size = UDim2.new(0, 620, 0, 0)
                 Util.Spring(Main, {Size = UDim2.new(0, 620, 0, 420)}, Theme.SpringSpeed)
@@ -2094,7 +2227,12 @@ function Kovari:Init(config)
             else
                 Util.Tween(Main, {Size = UDim2.new(0, 620, 0, 0)}, Theme.NormalSpeed, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
                 task.delay(Theme.NormalSpeed, function()
-                    if not UIVisible then Main.Visible = false end
+                    if not UIVisible then
+                        Main.Visible = false
+                        FloatingBtn.Visible = true
+                        FloatingBtn.Size = UDim2.new(0, 0, 0, 0)
+                        Util.Spring(FloatingBtn, {Size = UDim2.new(0, 48, 0, 48)}, 0.25)
+                    end
                     Toggling = false
                 end)
             end
