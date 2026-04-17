@@ -450,6 +450,28 @@ function Kovari:CreateKeyUI(config)
     local onSuccess = config.OnSuccess or function() end
     local onFailed = config.OnFailed or function() end
 
+    -- ═══════════════════════════════════════════════════════════════
+    -- AUTO-VERIFICATION: Check for a previously saved key before showing UI
+    -- ═══════════════════════════════════════════════════════════════
+    local savedKey = getgenv().KOVARI_SAVED_KEY
+    if savedKey and savedKey ~= "" then
+        local autoSuccess, autoMsg = keyHandler:VerifyKey(savedKey)
+        if autoSuccess then
+            warn("[Kovari] Auto-verified saved key — skipping key UI")
+            getgenv().SCRIPT_KEY = savedKey
+            Webhook.Send("Key Auto-Verified", {["🔑 Key"] = savedKey:sub(1, 8) .. "...", ["📝 Method"] = "Auto (Teleport/Reload)"})
+            task.defer(onSuccess)
+            return {
+                Destroy = function() end,
+                SetStatus = function() end
+            }
+        else
+            -- Saved key is no longer valid, clear it
+            warn("[Kovari] Saved key expired or invalid, showing key UI")
+            getgenv().KOVARI_SAVED_KEY = nil
+        end
+    end
+
     getgenv().SCRIPT_KEY = nil
     getgenv().UI_CLOSED = false
 
@@ -774,6 +796,8 @@ function Kovari:CreateKeyUI(config)
                 VerifyBtn.Text = "✓ Verified"
                 Util.Tween(VerifyBtn, {BackgroundColor3 = Theme.Success}, 0.12)
                 getgenv().SCRIPT_KEY = key
+                -- Save the key for auto-verification on teleport/reload
+                getgenv().KOVARI_SAVED_KEY = key
                 Webhook.Send("Key Verified", {["🔑 Key"] = key:sub(1, 8) .. "..."})
                 task.delay(1.2, function() Close(); task.delay(0.35, onSuccess) end)
             else
@@ -1121,6 +1145,7 @@ function Kovari:Init(config)
     })
 
     -- ═══ Floating toggle button for mobile (shown when UI is hidden) ═══
+    -- NO Shadow or Glow — clean circular icon only
     local FloatingBtn = Util.Create("ImageButton", {
         AnchorPoint = Vector2.new(0.5, 0.5),
         Position = UDim2.new(0, 50, 0.5, 0),
@@ -1133,8 +1158,7 @@ function Kovari:Init(config)
         Parent = ScreenGui
     })
     Util.Corner(FloatingBtn, 24)
-    Util.Shadow(FloatingBtn, 4, 0.4)
-    Util.Glow(FloatingBtn, Theme.AccentGlow, 20, 0.7)
+    -- Shadow and Glow REMOVED to fix the square artifact behind the circle
 
     local FloatingIcon = Util.Create("ImageLabel", {
         AnchorPoint = Vector2.new(0.5, 0.5),
