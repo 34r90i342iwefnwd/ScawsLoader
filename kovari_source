@@ -1925,8 +1925,11 @@ function Kovari:Init(config)
 
             RowSep(Row)
 
+            local renderConn
+
             local function CloseDD()
                 isOpen = false
+                if renderConn then renderConn:Disconnect(); renderConn = nil end
                 Util.Tween(DDList, {Size = UDim2.new(0, 140, 0, 0)}, 0.12, Enum.EasingStyle.Quart, Enum.EasingDirection.In)
                 Util.Tween(Arrow, {Rotation = 90}, 0.08)
                 task.delay(0.13, function() if not isOpen then DDList.Visible = false end end)
@@ -1934,16 +1937,24 @@ function Kovari:Init(config)
 
             local function OpenDD()
                 isOpen = true
-                -- Calculate position relative to ScreenGui using AbsolutePosition
-                local bp = DropBtn.AbsolutePosition
-                local bs = DropBtn.AbsoluteSize
-                local guiInset = game:GetService("GuiService"):GetGuiInset()
-                -- Position dropdown directly below the button, aligned to its right edge
-                local dropX = bp.X + bs.X - 140
-                local dropY = bp.Y + bs.Y + 4 + guiInset.Y
                 DDList.AnchorPoint = Vector2.new(0, 0)
-                DDList.Position = UDim2.new(0, dropX, 0, dropY)
                 DDList.Visible = true
+                
+                if renderConn then renderConn:Disconnect() end
+                renderConn = RunService.RenderStepped:Connect(function()
+                    if not DropBtn or not DropBtn.Parent then
+                        if renderConn then renderConn:Disconnect(); renderConn = nil end
+                        return
+                    end
+                    local scale = UIScale.Scale
+                    local bp = DropBtn.AbsolutePosition
+                    local bs = DropBtn.AbsoluteSize
+                    
+                    local dropX = (bp.X + bs.X) / scale - 140
+                    local dropY = (bp.Y + bs.Y) / scale + 4
+                    DDList.Position = UDim2.new(0, dropX, 0, dropY)
+                end)
+                
                 local h = math.min(#options * 30 + 10, 200)
                 Util.Spring(DDList, {Size = UDim2.new(0, 140, 0, h)}, 0.2)
                 Util.Tween(Arrow, {Rotation = 270}, 0.08)
