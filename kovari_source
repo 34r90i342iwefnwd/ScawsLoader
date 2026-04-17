@@ -21,6 +21,35 @@ local LocalPlayer = Players.LocalPlayer
 local IsMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 
 -- ═══════════════════════════════════════════════════════════════════
+-- TELEPORT QUEUE (Infinite Yield style auto-execution)
+-- ═══════════════════════════════════════════════════════════════════
+local queueteleport = (type(queue_on_teleport) == "function" and queue_on_teleport)
+    or (type(syn) == "table" and type(syn.queue_on_teleport) == "function" and syn.queue_on_teleport)
+    or (type(fluxus) == "table" and type(fluxus.queue_on_teleport) == "function" and fluxus.queue_on_teleport)
+    or nil
+
+local function QueueTeleportScript(key, scriptURL)
+    if not queueteleport then
+        warn("[Kovari] queue_on_teleport not available — auto-execution on teleport is disabled")
+        return
+    end
+    if not scriptURL or scriptURL == "" then
+        warn("[Kovari] No ScriptURL provided — cannot queue script for teleport")
+        return
+    end
+    local teleportScript = string.format([[
+getgenv().KOVARI_SAVED_KEY = %q
+loadstring(game:HttpGet(%q))()
+]], key, scriptURL)
+    local success, err = pcall(queueteleport, teleportScript)
+    if success then
+        warn("[Kovari] Script queued for teleport auto-execution")
+    else
+        warn("[Kovari] Failed to queue teleport script: " .. tostring(err))
+    end
+end
+
+-- ═══════════════════════════════════════════════════════════════════
 -- THEME
 -- ═══════════════════════════════════════════════════════════════════
 local Theme = {
@@ -449,6 +478,7 @@ function Kovari:CreateKeyUI(config)
     local discordLink = config.Discord or "discord.gg/QcvddpVeTM"
     local onSuccess = config.OnSuccess or function() end
     local onFailed = config.OnFailed or function() end
+    local scriptURL = config.ScriptURL or getgenv().KOVARI_SCRIPT_URL or ""
 
     -- ═══════════════════════════════════════════════════════════════
     -- AUTO-VERIFICATION: Check for a previously saved key before showing UI
@@ -459,6 +489,8 @@ function Kovari:CreateKeyUI(config)
         if autoSuccess then
             warn("[Kovari] Auto-verified saved key — skipping key UI")
             getgenv().SCRIPT_KEY = savedKey
+            -- Re-queue for chain teleports (so it survives multiple teleports)
+            QueueTeleportScript(savedKey, scriptURL)
             Webhook.Send("Key Auto-Verified", {["🔑 Key"] = savedKey:sub(1, 8) .. "...", ["📝 Method"] = "Auto (Teleport/Reload)"})
             task.defer(onSuccess)
             return {
@@ -798,6 +830,8 @@ function Kovari:CreateKeyUI(config)
                 getgenv().SCRIPT_KEY = key
                 -- Save the key for auto-verification on teleport/reload
                 getgenv().KOVARI_SAVED_KEY = key
+                -- Queue script to auto-execute after teleport (like Infinite Yield)
+                QueueTeleportScript(key, scriptURL)
                 Webhook.Send("Key Verified", {["🔑 Key"] = key:sub(1, 8) .. "..."})
                 task.delay(1.2, function() Close(); task.delay(0.35, onSuccess) end)
             else
@@ -2465,12 +2499,23 @@ end
 -- ═══════════════════════════════════════════════════════════════════
 function Kovari:Load(config)
     config = config or {}
+    -- Store ScriptURL globally so it persists for teleport queueing
+    if config.ScriptURL and config.ScriptURL ~= "" then
+        getgenv().KOVARI_SCRIPT_URL = config.ScriptURL
+    end
     if config.KeySystem then
         local kc = config.KeySystem
+        kc.ScriptURL = config.ScriptURL or getgenv().KOVARI_SCRIPT_URL or ""
         kc.OnSuccess = function() self:Init(config) end
         kc.OnFailed = kc.OnFailed or function() end
         return self:CreateKeyUI(kc)
     else
+        -- No key system — still queue the script for teleport if ScriptURL provided
+        if config.ScriptURL and config.ScriptURL ~= "" and queueteleport then
+            local teleportScript = string.format([[loadstring(game:HttpGet(%q))()]], config.ScriptURL)
+            pcall(queueteleport, teleportScript)
+            warn("[Kovari] Script queued for teleport auto-execution (no key system)")
+        end
         return self:Init(config)
     end
 end
