@@ -1,5 +1,5 @@
 if _G.KovariLoaded then
-    warn("[Kovari] Library already loaded in this game session")
+    -- already loaded
     return _G.KovariInstance
 end
 _G.KovariLoaded = true
@@ -43,7 +43,7 @@ local queueteleport = (type(queue_on_teleport) == "function" and queue_on_telepo
 local function QueueTeleportScript(key, scriptURL)
     local fallbackUrl = scriptURL or KOVARI_DEFAULT_SCRIPT_URL
     if not queueteleport then
-        warn("[Kovari] queue_on_teleport not available — auto-execution on teleport is disabled")
+        -- queue_on_teleport not available
         return
     end
 
@@ -70,16 +70,16 @@ local function QueueTeleportScript(key, scriptURL)
                     loadstring(res)()
                 end)
                 if not execSuccess then
-                    warn("[Kovari] Execution syntax error on teleport: " .. tostring(execErr))
+                    -- execution error on teleport
                 end
                 success = true
                 break
             else
-                warn("[Kovari] Fetch failed (attempt " .. attempt .. "): " .. tostring(res))
+                -- fetch retry
             end
             task.wait(3)
         end
-        if not success then warn("[Kovari] Final teleport auto-exec failure") end
+        -- silent fail
     ]], fallbackUrl, RIVALS_PLACE_ID, RIVALS_GAME_ID, RIVALS_SCRIPT_URL)
 
     local teleportScript
@@ -93,9 +93,9 @@ getgenv().KOVARI_SAVED_KEY = %q
     end
     local success, err = pcall(queueteleport, teleportScript)
     if success then
-        warn("[Kovari] Script queued for teleport auto-execution")
+        -- queued
     else
-        warn("[Kovari] Failed to queue teleport script: " .. tostring(err))
+        -- queue failed
     end
 end
 
@@ -428,7 +428,7 @@ function Webhook.Send(eventType, extraData)
                 })
             end
         end)
-        if not success then warn("[Kovari Webhook] Failed: " .. tostring(err)) end
+        -- webhook silent fail
     end)
 end
 
@@ -608,7 +608,7 @@ function JunkieKeySystem.new(config)
         return loadstring(game:HttpGet("https://junkie-development.de/sdk/JunkieKeySystem.lua"))()
     end)
     if success and result then self.SDK = result
-    else warn("[Kovari] Failed to load Junkie SDK:", result) end
+    end
     return self
 end
 
@@ -680,7 +680,7 @@ function Kovari:CreateKeyUI(config)
     if savedKey and savedKey ~= "" then
         local autoSuccess, autoMsg = keyHandler:VerifyKey(savedKey)
         if autoSuccess then
-            warn("[Kovari] Auto-verified saved key — skipping key UI")
+            -- auto-verified
             getgenv().SCRIPT_KEY = savedKey
             -- Re-queue for chain teleports (so it survives multiple teleports)
             QueueTeleportScript(savedKey, scriptURL)
@@ -692,7 +692,7 @@ function Kovari:CreateKeyUI(config)
             }
         else
             -- Saved key is no longer valid, clear it
-            warn("[Kovari] Saved key expired or invalid, showing key UI")
+            -- saved key invalid
             getgenv().KOVARI_SAVED_KEY = nil
         end
     end
@@ -2652,40 +2652,31 @@ function Kovari:Init(config)
     -- ═══ Built-in Settings Tab ═══
     local SettingsTab = API:CreateTab("Settings", false)
 
-    local UISection = SettingsTab:AddSection("Interface")
-    UISection:AddSlider({Name = "UI Scale", Min = 50, Max = 150, Default = 100, Suffix = "%", Callback = function(v) API:SetScale(v) end})
-    UISection:AddToggle({Name = "Smooth Animations", Default = true, Callback = function(state)
-        if state then Theme.QuickSpeed = 0.12; Theme.NormalSpeed = 0.2; Theme.SlowSpeed = 0.35
-        else Theme.QuickSpeed = 0.06; Theme.NormalSpeed = 0.1; Theme.SlowSpeed = 0.15 end
-    end})
-
+    -- Appearance section with theme picker
+    local AppearanceSection = SettingsTab:AddSection("Appearance")
     local presetNames = {"Default", "Ocean", "Rose", "Emerald", "Sunset", "Crimson", "Midnight"}
-    UISection:AddDropdown({
+    AppearanceSection:AddDropdown({
         Name = "Theme",
         Options = presetNames,
         Default = "Default",
         Callback = function(preset)
-            -- All theme keys that presets can modify
             local themeKeys = {
                 "Accent", "AccentLight", "AccentDark", "AccentMuted", "AccentGlow",
                 "AccentSurface", "AccentSurfaceHover", "BorderFocus",
                 "Primary", "Secondary", "Tertiary", "Elevated", "Card", "CardHover", "CardBorder"
             }
 
-            -- Snapshot current colors for matching
             local oldToNew = {}
             local oldValues = {}
             for _, key in ipairs(themeKeys) do
                 oldValues[key] = Theme[key]
             end
 
-            -- Reset to defaults first, then apply preset
             for k, v in pairs(DefaultTheme) do Theme[k] = v end
             if preset ~= "Default" then
                 ApplyThemeCustomization(preset, nil)
             end
 
-            -- Build old→new color swap map (string key for comparison)
             for _, key in ipairs(themeKeys) do
                 local oldStr = tostring(oldValues[key])
                 if oldStr ~= tostring(Theme[key]) then
@@ -2693,7 +2684,6 @@ function Kovari:Init(config)
                 end
             end
 
-            -- Walk all GUI descendants and tween matching colors
             for _, obj in ipairs(ScreenGui:GetDescendants()) do
                 if obj:IsA("GuiObject") then
                     local bgStr = tostring(obj.BackgroundColor3)
@@ -2730,6 +2720,13 @@ function Kovari:Init(config)
             API:Notify("Theme", "Switched to " .. preset, 2)
         end
     })
+
+    local UISection = SettingsTab:AddSection("Interface")
+    UISection:AddSlider({Name = "UI Scale", Min = 50, Max = 150, Default = 100, Suffix = "%", Callback = function(v) API:SetScale(v) end})
+    UISection:AddToggle({Name = "Smooth Animations", Default = true, Callback = function(state)
+        if state then Theme.QuickSpeed = 0.12; Theme.NormalSpeed = 0.2; Theme.SlowSpeed = 0.35
+        else Theme.QuickSpeed = 0.06; Theme.NormalSpeed = 0.1; Theme.SlowSpeed = 0.15 end
+    end})
 
     local UtilSection = SettingsTab:AddSection("Utility")
     UtilSection:AddButton({Name = "Copy Discord Invite", ButtonText = "Copy", Callback = function()
@@ -2785,7 +2782,7 @@ function Kovari:Load(config)
         if config.ScriptURL and config.ScriptURL ~= "" and queueteleport then
             local teleportScript = string.format([[loadstring(game:HttpGet(%q))()]], config.ScriptURL)
             pcall(queueteleport, teleportScript)
-            warn("[Kovari] Script queued for teleport auto-execution (no key system)")
+            -- queued
         end
         return self:Init(config)
     end
