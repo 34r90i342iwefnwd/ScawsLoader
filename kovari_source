@@ -4,6 +4,13 @@ if _G.KovariLoaded then
 end
 _G.KovariLoaded = true
 
+-- ═══════════════════════════════════════════════════════════════════
+-- WAIT FOR GAME (Infinite Yield style — ensures game is ready)
+-- ═══════════════════════════════════════════════════════════════════
+if not game:IsLoaded() then
+    game.Loaded:Wait()
+end
+
 local Kovari = {}
 Kovari.__index = Kovari
 
@@ -17,7 +24,7 @@ local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
 local LocalizationService = game:GetService("LocalizationService")
 
-local LocalPlayer = Players.LocalPlayer
+local LocalPlayer = Players.LocalPlayer or Players:GetPropertyChangedSignal("LocalPlayer"):Wait() or Players.LocalPlayer
 local IsMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 
 -- ═══════════════════════════════════════════════════════════════════
@@ -40,29 +47,43 @@ local function QueueTeleportScript(key, scriptURL)
     if key and key ~= "" then
         teleportScript = string.format([[
 getgenv().KOVARI_SAVED_KEY = %q
-repeat task.wait() until game:IsLoaded()
-local s, e = pcall(function()
-    local src = game:HttpGet(%q)
-    if src and src ~= "" then
-        loadstring(src)()
-    else
-        warn("[Kovari] Failed to fetch script on teleport")
-    end
-end)
-if not s then warn("[Kovari] Teleport auto-exec error: " .. tostring(e)) end
+if not game:IsLoaded() then game.Loaded:Wait() end
+local Players = game:GetService("Players")
+repeat task.wait() until Players.LocalPlayer
+task.wait(1)
+for attempt = 1, 3 do
+    local s, e = pcall(function()
+        local src = game:HttpGet(%q)
+        if type(src) == "string" and src ~= "" then
+            loadstring(src)()
+        else
+            error("Empty response")
+        end
+    end)
+    if s then break end
+    warn("[Kovari] Teleport auto-exec attempt " .. attempt .. " failed: " .. tostring(e))
+    if attempt < 3 then task.wait(2) end
+end
 ]], key, scriptURL)
     else
         teleportScript = string.format([[
-repeat task.wait() until game:IsLoaded()
-local s, e = pcall(function()
-    local src = game:HttpGet(%q)
-    if src and src ~= "" then
-        loadstring(src)()
-    else
-        warn("[Kovari] Failed to fetch script on teleport")
-    end
-end)
-if not s then warn("[Kovari] Teleport auto-exec error: " .. tostring(e)) end
+if not game:IsLoaded() then game.Loaded:Wait() end
+local Players = game:GetService("Players")
+repeat task.wait() until Players.LocalPlayer
+task.wait(1)
+for attempt = 1, 3 do
+    local s, e = pcall(function()
+        local src = game:HttpGet(%q)
+        if type(src) == "string" and src ~= "" then
+            loadstring(src)()
+        else
+            error("Empty response")
+        end
+    end)
+    if s then break end
+    warn("[Kovari] Teleport auto-exec attempt " .. attempt .. " failed: " .. tostring(e))
+    if attempt < 3 then task.wait(2) end
+end
 ]], scriptURL)
     end
     local success, err = pcall(queueteleport, teleportScript)
