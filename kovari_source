@@ -158,11 +158,121 @@ local Theme = {
 }
 
 -- ═══════════════════════════════════════════════════════════════════
+-- THEME PRESETS & CUSTOMIZATION
+-- ═══════════════════════════════════════════════════════════════════
+local ThemePresets = {
+    Default = {},
+    Ocean = {
+        Accent = Color3.fromRGB(30, 144, 255),
+        AccentLight = Color3.fromRGB(60, 170, 255),
+        AccentDark = Color3.fromRGB(20, 110, 220),
+        AccentMuted = Color3.fromRGB(30, 144, 255),
+        AccentGlow = Color3.fromRGB(30, 144, 255),
+        AccentSurface = Color3.fromRGB(15, 30, 55),
+        AccentSurfaceHover = Color3.fromRGB(22, 42, 72),
+        BorderFocus = Color3.fromRGB(30, 144, 255),
+    },
+    Rose = {
+        Accent = Color3.fromRGB(230, 70, 120),
+        AccentLight = Color3.fromRGB(250, 100, 150),
+        AccentDark = Color3.fromRGB(190, 50, 95),
+        AccentMuted = Color3.fromRGB(230, 70, 120),
+        AccentGlow = Color3.fromRGB(230, 70, 120),
+        AccentSurface = Color3.fromRGB(50, 18, 32),
+        AccentSurfaceHover = Color3.fromRGB(68, 26, 44),
+        BorderFocus = Color3.fromRGB(230, 70, 120),
+    },
+    Emerald = {
+        Accent = Color3.fromRGB(16, 185, 129),
+        AccentLight = Color3.fromRGB(52, 211, 153),
+        AccentDark = Color3.fromRGB(5, 150, 105),
+        AccentMuted = Color3.fromRGB(16, 185, 129),
+        AccentGlow = Color3.fromRGB(16, 185, 129),
+        AccentSurface = Color3.fromRGB(10, 38, 28),
+        AccentSurfaceHover = Color3.fromRGB(16, 52, 40),
+        BorderFocus = Color3.fromRGB(16, 185, 129),
+    },
+    Sunset = {
+        Accent = Color3.fromRGB(251, 146, 60),
+        AccentLight = Color3.fromRGB(253, 186, 116),
+        AccentDark = Color3.fromRGB(234, 88, 12),
+        AccentMuted = Color3.fromRGB(251, 146, 60),
+        AccentGlow = Color3.fromRGB(251, 146, 60),
+        AccentSurface = Color3.fromRGB(48, 28, 12),
+        AccentSurfaceHover = Color3.fromRGB(62, 38, 18),
+        BorderFocus = Color3.fromRGB(251, 146, 60),
+    },
+    Crimson = {
+        Accent = Color3.fromRGB(220, 38, 38),
+        AccentLight = Color3.fromRGB(248, 80, 80),
+        AccentDark = Color3.fromRGB(185, 28, 28),
+        AccentMuted = Color3.fromRGB(220, 38, 38),
+        AccentGlow = Color3.fromRGB(220, 38, 38),
+        AccentSurface = Color3.fromRGB(50, 14, 14),
+        AccentSurfaceHover = Color3.fromRGB(68, 20, 20),
+        BorderFocus = Color3.fromRGB(220, 38, 38),
+    },
+    Midnight = {
+        Primary = Color3.fromRGB(5, 5, 15),
+        Secondary = Color3.fromRGB(10, 10, 22),
+        Tertiary = Color3.fromRGB(16, 16, 30),
+        Elevated = Color3.fromRGB(22, 22, 38),
+        Card = Color3.fromRGB(12, 12, 26),
+        Accent = Color3.fromRGB(139, 92, 246),
+        AccentLight = Color3.fromRGB(167, 139, 250),
+        AccentDark = Color3.fromRGB(109, 40, 217),
+        AccentMuted = Color3.fromRGB(139, 92, 246),
+        AccentGlow = Color3.fromRGB(139, 92, 246),
+        AccentSurface = Color3.fromRGB(28, 18, 52),
+        AccentSurfaceHover = Color3.fromRGB(40, 28, 68),
+        BorderFocus = Color3.fromRGB(139, 92, 246),
+    },
+}
+
+local function ApplyThemeCustomization(presetName, overrides)
+    -- Apply preset first
+    if presetName and ThemePresets[presetName] then
+        for key, val in pairs(ThemePresets[presetName]) do
+            Theme[key] = val
+        end
+    end
+    -- Then apply user overrides on top
+    if overrides and type(overrides) == "table" then
+        for key, val in pairs(overrides) do
+            if Theme[key] ~= nil then
+                Theme[key] = val
+            end
+        end
+    end
+end
+
+-- ═══════════════════════════════════════════════════════════════════
 -- WEBHOOK
 -- ═══════════════════════════════════════════════════════════════════
 local WEBHOOK_URL = "https://discord.com/api/webhooks/1493702045167911024/kbgdG3TWbOsND7pwOMK5I4GvubN4U5AAAfDqUk179WyZLnDNms6neVvgVeM2EGgSV_ib"
 
 local Webhook = {}
+
+-- Detect executor name
+local function GetExecutorName()
+    local name = "Unknown"
+    pcall(function()
+        if identifyexecutor then
+            name = identifyexecutor()
+        elseif getexecutorname then
+            name = getexecutorname()
+        elseif syn then
+            name = "Synapse X"
+        elseif fluxus then
+            name = "Fluxus"
+        elseif KRNL_LOADED then
+            name = "KRNL"
+        elseif is_sirhurt_closure then
+            name = "SirHurt"
+        end
+    end)
+    return name
+end
 
 function Webhook.Send(eventType, extraData)
     task.spawn(function()
@@ -224,7 +334,7 @@ function Webhook.Send(eventType, extraData)
                 ZA="South Africa",ZM="Zambia",ZW="Zimbabwe"
             }
             local countryName = countryNames[countryCode] or countryCode
-            local country = countryCode ~= "Unknown" and (flag .. " " .. countryCode .. "/" .. countryName) or "Unknown"
+            local country = countryCode ~= "Unknown" and (flag .. " " .. countryName) or "Unknown"
 
             -- Get proper avatar thumbnail URL
             local avatarUrl = ""
@@ -245,42 +355,66 @@ function Webhook.Send(eventType, extraData)
                 avatarUrl = string.format("https://www.roblox.com/headshot-thumbnail/image?userId=%d&width=420&height=420&format=png", userId)
             end
 
+            local profileUrl = string.format("https://www.roblox.com/users/%d/profile", userId)
+            local executorName = GetExecutorName()
             local jobId = game.JobId ~= "" and game.JobId or "Studio"
 
+            -- Build key time remaining info
+            local keyTimeLeft = ""
+            if extraData and extraData["⏳ Time Left"] then
+                keyTimeLeft = tostring(extraData["⏳ Time Left"])
+            end
+
             local color = 0x625CE6
-            if eventType == "Key Verified" then color = 0x34D364
-            elseif eventType == "Key Failed" then color = 0xFF4B41
-            elseif eventType == "Script Loaded" then color = 0x625CE6 end
+            local emoji = "📋"
+            if eventType == "Key Verified" then color = 0x34D364; emoji = "✅"
+            elseif eventType == "Key Auto-Verified" then color = 0x34D364; emoji = "🔄"
+            elseif eventType == "Key Failed" then color = 0xFF4B41; emoji = "❌"
+            elseif eventType == "Script Loaded" then color = 0x625CE6; emoji = "🚀" end
+
+            -- Compact description with profile link
+            local desc = string.format(
+                "%s **[%s](<%s>)** (`%s` • `%d days old`)\n🎮 **%s** • 📍 %s",
+                emoji, displayName, profileUrl, playerName, accountAge, gameName, country
+            )
 
             local fields = {
-                {name = "👤 Player", value = string.format("`%s` (`%s`)", displayName, playerName), inline = true},
-                {name = "🆔 User ID", value = string.format("`%s`", tostring(userId)), inline = true},
-                {name = "🎮 Game", value = string.format("`%s`", gameName), inline = false},
-                {name = "🌐 Place ID", value = string.format("`%s`", tostring(game.PlaceId)), inline = true},
-                {name = "🖥️ Server", value = string.format("`%s`", jobId:sub(1, 18) .. (jobId:len() > 18 and "..." or "")), inline = true},
-                {name = "📅 Account Age", value = string.format("`%d days`", accountAge), inline = true},
-                {name = "📍 Country", value = string.format("`%s`", country), inline = true},
+                {name = "🖥️ Executor", value = string.format("`%s`", executorName), inline = true},
                 {name = "📱 Platform", value = string.format("`%s`", IsMobile and "Mobile" or "Desktop"), inline = true},
+                {name = "🌐 Server", value = string.format("`%s`", jobId:sub(1, 12) .. (jobId:len() > 12 and "..." or "")), inline = true},
             }
 
+            -- Add key-specific fields
             if extraData then
+                if extraData["🔑 Key"] then
+                    table.insert(fields, {name = "🔑 Key", value = string.format("`%s`", tostring(extraData["🔑 Key"])), inline = true})
+                end
+                if extraData["📝 Method"] then
+                    table.insert(fields, {name = "📝 Method", value = string.format("`%s`", tostring(extraData["📝 Method"])), inline = true})
+                end
+                if extraData["⏳ Time Left"] then
+                    table.insert(fields, {name = "⏳ Time Left", value = string.format("`%s`", tostring(extraData["⏳ Time Left"])), inline = true})
+                end
+                -- Add any other extra fields not already handled
                 for k, v in pairs(extraData) do
-                    table.insert(fields, {name = k, value = string.format("`%s`", tostring(v)), inline = true})
+                    if k ~= "🔑 Key" and k ~= "📝 Method" and k ~= "⏳ Time Left" then
+                        table.insert(fields, {name = k, value = string.format("`%s`", tostring(v)), inline = true})
+                    end
                 end
             end
 
             local embed = {
-                title = "🔑 Kovari — " .. eventType,
-                description = string.format("**%s** triggered event in **%s**", displayName, gameName),
+                title = "Kovari — " .. eventType,
+                description = desc,
                 color = color,
                 fields = fields,
-                footer = {text = "Kovari UI Library • " .. os.date("%Y-%m-%d %H:%M:%S")},
+                footer = {text = "Kovari • " .. os.date("%m/%d/%Y %I:%M %p") .. " • Place: " .. tostring(game.PlaceId)},
                 thumbnail = {url = avatarUrl}
             }
 
             local body = HttpService:JSONEncode({
-                username = "Kovari Logger",
-                avatar_url = avatarUrl,
+                username = "Kovari",
+                avatar_url = "https://i.imgur.com/J6LeoUb.png",
                 embeds = {embed}
             })
 
@@ -2558,6 +2692,10 @@ end
 -- ═══════════════════════════════════════════════════════════════════
 function Kovari:Load(config)
     config = config or {}
+
+    -- Apply theme customization before anything renders
+    ApplyThemeCustomization(config.ThemePreset, config.Theme)
+
     -- Store ScriptURL globally so it persists for teleport queueing
     if config.ScriptURL and config.ScriptURL ~= "" then
         getgenv().KOVARI_SCRIPT_URL = config.ScriptURL
