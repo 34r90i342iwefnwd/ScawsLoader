@@ -23,24 +23,28 @@ local IsMobile = UserInputService.TouchEnabled and not UserInputService.Keyboard
 -- ═══════════════════════════════════════════════════════════════════
 -- TELEPORT QUEUE (Infinite Yield style auto-execution)
 -- ═══════════════════════════════════════════════════════════════════
+local KOVARI_DEFAULT_SCRIPT_URL = "https://scawshub.vercel.app/kovari"
+
 local queueteleport = (type(queue_on_teleport) == "function" and queue_on_teleport)
     or (type(syn) == "table" and type(syn.queue_on_teleport) == "function" and syn.queue_on_teleport)
     or (type(fluxus) == "table" and type(fluxus.queue_on_teleport) == "function" and fluxus.queue_on_teleport)
     or nil
 
 local function QueueTeleportScript(key, scriptURL)
+    scriptURL = scriptURL or KOVARI_DEFAULT_SCRIPT_URL
     if not queueteleport then
         warn("[Kovari] queue_on_teleport not available — auto-execution on teleport is disabled")
         return
     end
-    if not scriptURL or scriptURL == "" then
-        warn("[Kovari] No ScriptURL provided — cannot queue script for teleport")
-        return
-    end
-    local teleportScript = string.format([[
+    local teleportScript
+    if key and key ~= "" then
+        teleportScript = string.format([[
 getgenv().KOVARI_SAVED_KEY = %q
 loadstring(game:HttpGet(%q))()
 ]], key, scriptURL)
+    else
+        teleportScript = string.format([[loadstring(game:HttpGet(%q))()]], scriptURL)
+    end
     local success, err = pcall(queueteleport, teleportScript)
     if success then
         warn("[Kovari] Script queued for teleport auto-execution")
