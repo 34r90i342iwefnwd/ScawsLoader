@@ -1106,6 +1106,8 @@ function Kovari:Init(config)
     local Toggling = false
     local UIScaleValue = 100
     local Connections = {}
+    local DefaultTheme = {}
+    for k, v in pairs(Theme) do DefaultTheme[k] = v end
 
     Webhook.Send("Script Loaded")
 
@@ -2656,6 +2658,78 @@ function Kovari:Init(config)
         if state then Theme.QuickSpeed = 0.12; Theme.NormalSpeed = 0.2; Theme.SlowSpeed = 0.35
         else Theme.QuickSpeed = 0.06; Theme.NormalSpeed = 0.1; Theme.SlowSpeed = 0.15 end
     end})
+
+    local presetNames = {"Default", "Ocean", "Rose", "Emerald", "Sunset", "Crimson", "Midnight"}
+    UISection:AddDropdown({
+        Name = "Theme",
+        Options = presetNames,
+        Default = "Default",
+        Callback = function(preset)
+            -- All theme keys that presets can modify
+            local themeKeys = {
+                "Accent", "AccentLight", "AccentDark", "AccentMuted", "AccentGlow",
+                "AccentSurface", "AccentSurfaceHover", "BorderFocus",
+                "Primary", "Secondary", "Tertiary", "Elevated", "Card", "CardHover", "CardBorder"
+            }
+
+            -- Snapshot current colors for matching
+            local oldToNew = {}
+            local oldValues = {}
+            for _, key in ipairs(themeKeys) do
+                oldValues[key] = Theme[key]
+            end
+
+            -- Reset to defaults first, then apply preset
+            for k, v in pairs(DefaultTheme) do Theme[k] = v end
+            if preset ~= "Default" then
+                ApplyThemeCustomization(preset, nil)
+            end
+
+            -- Build old→new color swap map (string key for comparison)
+            for _, key in ipairs(themeKeys) do
+                local oldStr = tostring(oldValues[key])
+                if oldStr ~= tostring(Theme[key]) then
+                    oldToNew[oldStr] = Theme[key]
+                end
+            end
+
+            -- Walk all GUI descendants and tween matching colors
+            for _, obj in ipairs(ScreenGui:GetDescendants()) do
+                if obj:IsA("GuiObject") then
+                    local bgStr = tostring(obj.BackgroundColor3)
+                    if oldToNew[bgStr] then
+                        Util.Tween(obj, {BackgroundColor3 = oldToNew[bgStr]}, 0.35)
+                    end
+                end
+                if obj:IsA("TextLabel") or obj:IsA("TextButton") or obj:IsA("TextBox") then
+                    local tcStr = tostring(obj.TextColor3)
+                    if oldToNew[tcStr] then
+                        Util.Tween(obj, {TextColor3 = oldToNew[tcStr]}, 0.35)
+                    end
+                end
+                if obj:IsA("ImageLabel") or obj:IsA("ImageButton") then
+                    local icStr = tostring(obj.ImageColor3)
+                    if oldToNew[icStr] then
+                        Util.Tween(obj, {ImageColor3 = oldToNew[icStr]}, 0.35)
+                    end
+                end
+                if obj:IsA("UIStroke") then
+                    local scStr = tostring(obj.Color)
+                    if oldToNew[scStr] then
+                        Util.Tween(obj, {Color = oldToNew[scStr]}, 0.35)
+                    end
+                end
+                if obj:IsA("ScrollingFrame") then
+                    local sbStr = tostring(obj.ScrollBarImageColor3)
+                    if oldToNew[sbStr] then
+                        Util.Tween(obj, {ScrollBarImageColor3 = oldToNew[sbStr]}, 0.35)
+                    end
+                end
+            end
+
+            API:Notify("Theme", "Switched to " .. preset, 2)
+        end
+    })
 
     local UtilSection = SettingsTab:AddSection("Utility")
     UtilSection:AddButton({Name = "Copy Discord Invite", ButtonText = "Copy", Callback = function()
