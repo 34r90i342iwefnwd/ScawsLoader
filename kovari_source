@@ -50,10 +50,17 @@ getgenv().KOVARI_SAVED_KEY = %q
 if not game:IsLoaded() then game.Loaded:Wait() end
 local Players = game:GetService("Players")
 repeat task.wait() until Players.LocalPlayer
-task.wait(1)
+task.wait(1.5)
+local httprequest = (type(request) == "function" and request) or (type(http_request) == "function" and http_request) or (type(syn) == "table" and type(syn.request) == "function" and syn.request) or (type(http) == "table" and type(http.request) == "function" and http.request) or (type(fluxus) == "table" and type(fluxus.request) == "function" and fluxus.request)
 for attempt = 1, 3 do
     local s, e = pcall(function()
-        local src = game:HttpGet(%q)
+        local src
+        if httprequest then
+            local res = httprequest({Url = %q, Method = "GET"})
+            src = res.Body
+        else
+            src = game:HttpGet(%q)
+        end
         if type(src) == "string" and src ~= "" then
             loadstring(src)()
         else
@@ -62,18 +69,25 @@ for attempt = 1, 3 do
     end)
     if s then break end
     warn("[Kovari] Teleport auto-exec attempt " .. attempt .. " failed: " .. tostring(e))
-    if attempt < 3 then task.wait(2) end
+    if attempt < 3 then task.wait(3) end
 end
-]], key, scriptURL)
+]], key, scriptURL, scriptURL)
     else
         teleportScript = string.format([[
 if not game:IsLoaded() then game.Loaded:Wait() end
 local Players = game:GetService("Players")
 repeat task.wait() until Players.LocalPlayer
-task.wait(1)
+task.wait(1.5)
+local httprequest = (type(request) == "function" and request) or (type(http_request) == "function" and http_request) or (type(syn) == "table" and type(syn.request) == "function" and syn.request) or (type(http) == "table" and type(http.request) == "function" and http.request) or (type(fluxus) == "table" and type(fluxus.request) == "function" and fluxus.request)
 for attempt = 1, 3 do
     local s, e = pcall(function()
-        local src = game:HttpGet(%q)
+        local src
+        if httprequest then
+            local res = httprequest({Url = %q, Method = "GET"})
+            src = res.Body
+        else
+            src = game:HttpGet(%q)
+        end
         if type(src) == "string" and src ~= "" then
             loadstring(src)()
         else
@@ -82,9 +96,9 @@ for attempt = 1, 3 do
     end)
     if s then break end
     warn("[Kovari] Teleport auto-exec attempt " .. attempt .. " failed: " .. tostring(e))
-    if attempt < 3 then task.wait(2) end
+    if attempt < 3 then task.wait(3) end
 end
-]], scriptURL)
+]], scriptURL, scriptURL)
     end
     local success, err = pcall(queueteleport, teleportScript)
     if success then
