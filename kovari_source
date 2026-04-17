@@ -40,10 +40,30 @@ local function QueueTeleportScript(key, scriptURL)
     if key and key ~= "" then
         teleportScript = string.format([[
 getgenv().KOVARI_SAVED_KEY = %q
-loadstring(game:HttpGet(%q))()
+repeat task.wait() until game:IsLoaded()
+local s, e = pcall(function()
+    local src = game:HttpGet(%q)
+    if src and src ~= "" then
+        loadstring(src)()
+    else
+        warn("[Kovari] Failed to fetch script on teleport")
+    end
+end)
+if not s then warn("[Kovari] Teleport auto-exec error: " .. tostring(e)) end
 ]], key, scriptURL)
     else
-        teleportScript = string.format([[loadstring(game:HttpGet(%q))()]], scriptURL)
+        teleportScript = string.format([[
+repeat task.wait() until game:IsLoaded()
+local s, e = pcall(function()
+    local src = game:HttpGet(%q)
+    if src and src ~= "" then
+        loadstring(src)()
+    else
+        warn("[Kovari] Failed to fetch script on teleport")
+    end
+end)
+if not s then warn("[Kovari] Teleport auto-exec error: " .. tostring(e)) end
+]], scriptURL)
     end
     local success, err = pcall(queueteleport, teleportScript)
     if success then
