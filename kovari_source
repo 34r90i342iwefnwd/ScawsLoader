@@ -2664,13 +2664,31 @@ function Kovari:Init(config)
     local SettingsTab = API:CreateTab("Settings", false)
 
     -- Appearance section with theme picker
+    local oldCfg = nil
+    pcall(function()
+        if isfile and isfile("KovariSettings.json") then
+            oldCfg = HttpService:JSONDecode(readfile("KovariSettings.json"))
+        end
+    end)
+    oldCfg = oldCfg or {}
+
+    local function SaveConfig(key, val)
+        oldCfg[key] = val
+        pcall(function()
+            if writefile then
+                writefile("KovariSettings.json", HttpService:JSONEncode(oldCfg))
+            end
+        end)
+    end
+
     local AppearanceSection = SettingsTab:AddSection("Appearance")
     local presetNames = {"Default", "Ocean", "Rose", "Emerald", "Sunset", "Crimson", "Midnight"}
-    AppearanceSection:AddDropdown({
+    local dropdownInst = AppearanceSection:AddDropdown({
         Name = "Theme",
         Options = presetNames,
-        Default = "Default",
+        Default = oldCfg.Theme or "Default",
         Callback = function(preset)
+            SaveConfig("Theme", preset)
             local themeKeys = {
                 "Accent", "AccentLight", "AccentDark", "AccentMuted", "AccentGlow",
                 "AccentSurface", "AccentSurfaceHover", "BorderFocus",
@@ -2733,8 +2751,12 @@ function Kovari:Init(config)
     })
 
     local UISection = SettingsTab:AddSection("Interface")
-    UISection:AddSlider({Name = "UI Scale", Min = 50, Max = 150, Default = 100, Suffix = "%", Callback = function(v) API:SetScale(v) end})
-    UISection:AddToggle({Name = "Smooth Animations", Default = true, Callback = function(state)
+    local scaleSlider = UISection:AddSlider({Name = "UI Scale", Min = 50, Max = 150, Default = oldCfg.Scale or 100, Suffix = "%", Callback = function(v) 
+        SaveConfig("Scale", v)
+        API:SetScale(v)
+    end})
+    UISection:AddToggle({Name = "Smooth Animations", Default = oldCfg.SmoothAnimations ~= false, Callback = function(state)
+        SaveConfig("SmoothAnimations", state)
         if state then Theme.QuickSpeed = 0.12; Theme.NormalSpeed = 0.2; Theme.SlowSpeed = 0.35
         else Theme.QuickSpeed = 0.06; Theme.NormalSpeed = 0.1; Theme.SlowSpeed = 0.15 end
     end})
@@ -2763,6 +2785,17 @@ function Kovari:Init(config)
         if not s then API:Notify("Error", "Failed: " .. tostring(r), 3) end
     end})
 
+    if oldCfg.Theme and presetNames[oldCfg.Theme] then
+        task.defer(function()
+            dropdownInst:SetSelected(oldCfg.Theme)
+        end)
+    end
+    if oldCfg.Scale then
+        task.defer(function()
+            API:SetScale(oldCfg.Scale)
+        end)
+    end
+
     local DangerSection = SettingsTab:AddSection("Danger Zone")
     DangerSection:AddButton({Name = "Destroy UI", ButtonText = "Destroy", Callback = function() API:Destroy() end})
 
@@ -2775,8 +2808,18 @@ end
 function Kovari:Load(config)
     config = config or {}
 
+    -- Try to apply saved theme right at the very beginning
+    local fallbackTheme = config.ThemePreset
+    pcall(function()
+        if isfile and isfile("KovariSettings.json") then
+            local data = HttpService:JSONDecode(readfile("KovariSettings.json"))
+            if data and data.Theme then
+                fallbackTheme = data.Theme
+            end
+        end
+    end)
     -- Apply theme customization before anything renders
-    ApplyThemeCustomization(config.ThemePreset, config.Theme)
+    ApplyThemeCustomization(fallbackTheme, config.Theme)
 
     -- Store ScriptURL globally so it persists for teleport queueing
     if config.ScriptURL and config.ScriptURL ~= "" then
