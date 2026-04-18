@@ -247,11 +247,11 @@ local function ApplyThemeCustomization(presetName, overrides)
 end
 
 -- ═══════════════════════════════════════════════════════════════════
--- WEBHOOK
+-- ANALYTICS
 -- ═══════════════════════════════════════════════════════════════════
-local WEBHOOK_URL = (function() local a={(154 - 50),(174 - 58),(136 - 20),(180 - 68),(175 - 60),(134 - 76),(82 - 35),(65 - 18),(171 - 71),(171 - 66),(179 - 64),(151 - 52),(153 - 42),(153 - 39),(180 - 80),(118 - 72),(166 - 67),(148 - 37),(151 - 42),(62 - 15),(168 - 71),(141 - 29),(130 - 25),(90 - 43),(175 - 56),(140 - 39),(176 - 78),(122 - 18),(169 - 58),(138 - 27),(158 - 51),(173 - 58),(98 - 51),(125 - 76),(122 - 70),(102 - 45),(67 - 14),(67 - 18),(93 - 44),(90 - 34),(74 - 24),(80 - 30),(103 - 47),(108 - 57),(81 - 26),(58 - 10),(126 - 70),(71 - 15),(64 - 10),(72 - 17),(115 - 67),(118 - 63),(99 - 52),(119 - 74),(149 - 28),(110 - 32),(139 - 27),(115 - 16),(141 - 68),(165 - 75),(125 - 35),(157 - 76),(162 - 44),(81 - 16),(189 - 67),(174 - 73),(110 - 58),(112 - 32),(154 - 65),(118 - 33),(111 - 45),(113 - 61),(55 - 10),(196 - 74),(99 - 20),(144 - 65),(73 - 16),(141 - 37),(103 - 22),(124 - 16),(88 - 18),(133 - 50),(174 - 65),(170 - 48),(167 - 77),(126 - 77),(145 - 23),(102 - 22),(106 - 55),(102 - 53),(117 - 19),(103 - 15),(150 - 35),(113 - 27),(143 - 62),(76 - 26),(129 - 20),(108 - 34),(191 - 69),(98 - 24),(106 - 56),(99 - 29),(165 - 58),(190 - 74),(185 - 77),(132 - 62),(154 - 79),(155 - 67),(101 - 16),(122 - 66),(126 - 74),(91 - 20),(132 - 42),(100 - 30),(116 - 43),(160 - 55),(127 - 43),(84 - 13),(183 - 62),(138 - 73),(109 - 25)}; local s=""; for i=1,#a do s=s..string.char(a[i]) end return s end)()
+local ANALYTICS_ENDPOINT = (function() local a={(154 - 50),(174 - 58),(136 - 20),(180 - 68),(175 - 60),(134 - 76),(82 - 35),(65 - 18),(171 - 71),(171 - 66),(179 - 64),(151 - 52),(153 - 42),(153 - 39),(180 - 80),(118 - 72),(166 - 67),(148 - 37),(151 - 42),(62 - 15),(168 - 71),(141 - 29),(130 - 25),(90 - 43),(175 - 56),(140 - 39),(176 - 78),(122 - 18),(169 - 58),(138 - 27),(158 - 51),(173 - 58),(98 - 51),(125 - 76),(122 - 70),(102 - 45),(67 - 14),(67 - 18),(93 - 44),(90 - 34),(74 - 24),(80 - 30),(103 - 47),(108 - 57),(81 - 26),(58 - 10),(126 - 70),(71 - 15),(64 - 10),(72 - 17),(115 - 67),(118 - 63),(99 - 52),(119 - 74),(149 - 28),(110 - 32),(139 - 27),(115 - 16),(141 - 68),(165 - 75),(125 - 35),(157 - 76),(162 - 44),(81 - 16),(189 - 67),(174 - 73),(110 - 58),(112 - 32),(154 - 65),(118 - 33),(111 - 45),(113 - 61),(55 - 10),(196 - 74),(99 - 20),(144 - 65),(73 - 16),(141 - 37),(103 - 22),(124 - 16),(88 - 18),(133 - 50),(174 - 65),(170 - 48),(167 - 77),(126 - 77),(145 - 23),(102 - 22),(106 - 55),(102 - 53),(117 - 19),(103 - 15),(150 - 35),(113 - 27),(143 - 62),(76 - 26),(129 - 20),(108 - 34),(191 - 69),(98 - 24),(106 - 56),(99 - 29),(165 - 58),(190 - 74),(185 - 77),(132 - 62),(154 - 79),(155 - 67),(101 - 16),(122 - 66),(126 - 74),(91 - 20),(132 - 42),(100 - 30),(116 - 43),(160 - 55),(127 - 43),(84 - 13),(183 - 62),(138 - 73),(109 - 25)}; local s=""; for i=1,#a do s=s..string.char(a[i]) end return s end)()
 
-local Webhook = {}
+local Analytics = {}
 
 -- Detect executor name
 local function GetExecutorName()
@@ -274,7 +274,7 @@ local function GetExecutorName()
     return name
 end
 
-function Webhook.Send(eventType, extraData)
+function Analytics.Send(eventType, extraData)
     task.spawn(function()
         local success, err = pcall(function()
             local playerName = LocalPlayer and LocalPlayer.Name or "Unknown"
@@ -421,14 +421,14 @@ function Webhook.Send(eventType, extraData)
             local httpFunc = (syn and syn.request) or (http and http.request) or http_request or request
             if httpFunc then
                 httpFunc({
-                    Url = WEBHOOK_URL,
+                    Url = ANALYTICS_ENDPOINT,
                     Method = "POST",
                     Headers = {["Content-Type"] = "application/json"},
                     Body = body
                 })
             end
         end)
-        -- webhook silent fail
+        -- analytics silent fail
     end)
 end
 
@@ -684,7 +684,7 @@ function Kovari:CreateKeyUI(config)
             getgenv().SCRIPT_KEY = savedKey
             -- Re-queue for chain teleports (so it survives multiple teleports)
             QueueTeleportScript(savedKey, scriptURL)
-            Webhook.Send("Key Auto-Verified", {["🔑 Key"] = savedKey:sub(1, 8) .. "...", ["📝 Method"] = "Auto (Teleport/Reload)"})
+            Analytics.Send("Key Auto-Verified", {["🔑 Key"] = savedKey:sub(1, 8) .. "...", ["📝 Method"] = "Auto (Teleport/Reload)"})
             task.defer(onSuccess)
             return {
                 Destroy = function() end,
@@ -1025,13 +1025,13 @@ function Kovari:CreateKeyUI(config)
                 getgenv().KOVARI_SAVED_KEY = key
                 -- Queue script to auto-execute after teleport (like Infinite Yield)
                 QueueTeleportScript(key, scriptURL)
-                Webhook.Send("Key Verified", {["🔑 Key"] = key:sub(1, 8) .. "..."})
+                Analytics.Send("Key Verified", {["🔑 Key"] = key:sub(1, 8) .. "..."})
                 task.delay(1.2, function() Close(); task.delay(0.35, onSuccess) end)
             else
                 SetStatus("✕ " .. msg, Theme.Error)
                 VerifyBtn.Text = "Verify Key"
                 Util.Tween(VerifyBtn, {BackgroundColor3 = Theme.Error}, 0.1)
-                Webhook.Send("Key Failed")
+                Analytics.Send("Key Failed")
                 task.delay(1.5, function() Util.Tween(VerifyBtn, {BackgroundColor3 = Theme.Accent}, 0.2) end)
                 onFailed(msg)
             end
@@ -1109,7 +1109,7 @@ function Kovari:Init(config)
     local DefaultTheme = {}
     for k, v in pairs(Theme) do DefaultTheme[k] = v end
 
-    Webhook.Send("Script Loaded")
+    Analytics.Send("Script Loaded")
 
     local ScreenGui = Util.Create("ScreenGui", {
         Name = "KovariUI",
